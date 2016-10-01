@@ -1,3 +1,7 @@
+# See MongoDB Database
+
+Ask Andy for access to hackduke-mentorship-bot on Heroku, where you can see the database through MLab
+
 # Botkit demo using Express and Mongo
 
 The folks at [Botkit](https://github.com/howdyai/botkit) have done an amazing job at building a framework for (Slack) bots applications. They have included an [example](https://github.com/howdyai/botkit/blob/master/examples/slackbutton_bot.js) of creating a Slack app that can be installed with just an "Add to Slack" button, as well as an [adapter](https://github.com/howdyai/botkit-storage-mongo) allowing to use MongoDB for storage.
@@ -9,7 +13,7 @@ However, the example used Botkit's webserver to manage requests such as authenti
 * Serves webpages through standard express routes
 ``` app/routes/routes.js ```
 
-* Uses Monk as MongoDB driver
+* Uses Mongoose as MongoDB driver
 * Includes by default the three Botkit collections : Teams, Users, and Channels
 
 ## Configuration
