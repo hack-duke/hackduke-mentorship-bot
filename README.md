@@ -4,8 +4,7 @@ Ask Andy for access to hackduke-mentorship-bot on Heroku, where you can see the 
 
 # Configuration variables
 
-Copy the correct .env from hackduke-secrets
-Replace CREATEDBYUSER in .env with your slack ID (this can be found using Slack's online API tester)
+Copy the correct .env from hackduke-secrets, replace CREATEDBYUSER in .env with your slack ID (this can be found using Slack's online API tester)
 
 # Botkit demo using Express and Mongo
 
