@@ -44,9 +44,9 @@ var team = {
   bot:{
     token: process.env.BOTTOKEN,
     user_id: process.env.BOTID,
-    createdBy: process.env.CREATEDUSER
+    createdBy: process.env.CREATEDBYUSER
   },
-  createdBy: process.env.CREATEDUSER,
+  createdBy: process.env.CREATEDBYUSER,
   url: process.env.SLACKURL,
   name: 'HackDuke'
 }
