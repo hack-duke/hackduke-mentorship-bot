@@ -1,11 +1,11 @@
-var request_manager = require('./apiRequestManager.js')
+var requestManager = require('./apiRequestManager.js')
 var botkitMongoStorage = require('../config/botkitMongoStorage')({mongoUri: process.env.MONGOURI})
 
 exports.setUpDialog = function(controller) {
 
   // pulls mentors from registration API and updates them on the database
   controller.hears('update mentors','direct_message,direct_mention',function(bot,message) {
-    request_manager.getMentors(function(err, body) {
+    requestManager.getMentors(function(err, body) {
       for(var i = 0; i < body.length; i++){
         var mentor = body[i];
         // arrange data to be placed in Mentor schema
@@ -44,7 +44,7 @@ exports.setUpDialog = function(controller) {
       var participantSlackId = message['user'];
       // group name is currently lowercase mentor id, dash, and lowercase participant id
       var groupName = mentorSlackId.toLowerCase() + '-' + participantSlackId.toLowerCase();
-      request_manager.createGroup(groupName, function(err, body) {
+      requestManager.createGroup(groupName, function(err, body) {
         if(err || !result) {
           return bot.reply(message, JSON.stringify(err));
         } 
@@ -55,7 +55,7 @@ exports.setUpDialog = function(controller) {
           bot.reply(message, body['error']);
         } else {
           // uppercase ids must be passed into inviteToGroup
-          request_manager.inviteToGroup(groupName, participantSlackId, mentorSlackId, function(err, result) {
+          requestManager.inviteToGroup(groupName, participantSlackId, mentorSlackId, function(err, result) {
             if(err || !result) {
               return bot.reply(message, JSON.stringify(err));
             }
