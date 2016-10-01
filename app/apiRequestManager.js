@@ -26,7 +26,7 @@ exports.getMentors = function(cb) {
     if (err || !res) {
       return cb(err, null);
     }
-    return cb(null, body);
+    cb(null, body);
   })
 }
 
@@ -41,7 +41,7 @@ exports.createGroup = function(name, cb) {
     if (err) {
       return cb(err, null);
     }
-    return cb(null, JSON.parse(body));
+    cb(null, JSON.parse(body));
   })
 }
 
@@ -56,11 +56,34 @@ exports.inviteToGroup = function(groupName, participant, mentor, cb) {
     invite(endpoint, participant, function(err, result){
       invite(endpoint, mentor, function(err, result){
         invite(endpoint, process.env.BOTID, function(err, result){
-          cb(null, result);
+          if(err || !result) {
+            return cb(err, null);
+          }
+          messageGroup(id, '@channel Here\'s a mentor to help you!', function(err, result) {
+            if(err || !result) {
+              return cb(err, null);
+            }
+            cb(null, result);
+          });
         });
       });
     });
   });
+}
+
+var messageGroup = exports.messageGroup = function(id, text, cb) {
+  var postMessageUrl = slack_url + `/chat.postMessage?token=${process.env.HACKDUKETOKEN}`
+  var endpoint = postMessageUrl + `&channel=${id}&text=${text}&username=mentorbot`
+  var options = {
+    method: 'get',
+    url: endpoint,
+  }
+  Request(options, function (err, res, body) {
+    if (err) {
+      return cb(err, null);
+    }
+    cb(null, JSON.parse(body));
+  })
 }
 
 // invites the specified userId, requires the groups.invite API URL and the token
@@ -72,11 +95,9 @@ var invite = exports.invite = function(currEndpoint, userId, cb) {
   }
   Request(options, function (err, res, body) {
     if (err || !res) {
-      console.log(err);
       return cb(err, null);
     }
-    console.log(body);
-    return cb(null, body)
+    cb(null, body)
   });
 }
 
@@ -103,6 +124,6 @@ var groupIdFromName = exports.groupIdFromName = function(name, cb) {
         return cb(null, group['id'])
       }
     }
-    return cb('Group with that name not found', null);
+    cb('Group with that name not found', null);
   })
 }
