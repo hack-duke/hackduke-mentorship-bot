@@ -59,13 +59,25 @@ exports.inviteToGroup = function(groupName, participant, mentor, cb) {
           if(err || !result) {
             return cb(err, null);
           }
-          messageGroup(id, '@channel Here\'s a mentor to help you!', function(err, result) {
-            if(err || !result) {
+          // TODO: clean up nested calls?
+          userNameFromID(participant, function(err, participantName) {
+            if(err || !participantName) {
               return cb(err, null);
             }
-            cb(null, result);
-          });
-          // After match Todos 
+            userNameFromID(mentor, function(err, mentorName) {
+              if(err || !mentorName) {
+                return cb(err, null);
+              }
+              console.log(mentorName + ' womp ' + participantName + '\n');
+              messageGroup(id, '@channel Hey ' + participantName + ', meet ' + mentorName + '!', function(err, result) {
+                if(err || !result) {
+                  return cb(err, null);
+                }
+                cb(null, result);
+              });
+            })
+          })
+          // After match Todos (just entered group chat)
           // TODO: give some background info about the mentor/mentee
           // TODO: alert about length of the session
           // TODO: prompt with any further commands
@@ -130,5 +142,32 @@ var groupIdFromName = exports.groupIdFromName = function(name, cb) {
       }
     }
     cb('Group with that name not found', null);
+  })
+}
+
+// retrieves a user friendly name from a Slack ID
+var userNameFromID = exports.userNameFromID = function(id, cb) {
+  var endpoint = slack_url + `/users.list?token=${process.env.HACKDUKETOKEN}&pretty=1`
+  var options = {
+    method: 'get',
+    url: endpoint,
+  }
+  Request(options, function (err, res, body) {
+    if (err || !res) {
+      return cb(err, null);
+    }
+    var parsedBody = JSON.parse(body);
+    if(!parsedBody['ok']) {
+      return cb(parsedBody['error'], null);
+    }
+    var members = parsedBody['members'];
+    // loop through groups until name matches
+    for(var i = 0; i < members.length; i++) {
+      var member = members[i];
+      if(id == member['name']) {
+        return cb(null, member['name'])
+      }
+    }
+    cb('Member with ID ' + id + ' not found', null);
   })
 }
