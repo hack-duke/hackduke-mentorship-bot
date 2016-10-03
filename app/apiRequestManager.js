@@ -77,11 +77,6 @@ exports.inviteToGroup = function(groupName, participant, mentor, cb) {
               });
             })
           })
-          // After match Todos (just entered group chat)
-          // TODO: give some background info about the mentor/mentee
-          // TODO: alert about length of the session
-          // TODO: prompt with any further commands
-
         });
       });
     });
