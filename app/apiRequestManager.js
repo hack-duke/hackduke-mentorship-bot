@@ -64,9 +64,9 @@ exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
           var mentorLastName = mentor['last_name'];
           var mentorName = mentorFirstName + ' ' + mentorLastName;
           var skillsArr = mentor['skills'];
-          var mentorSkills = mentor.join(', ');
-          userNameFromID(participantSlackId, function(err, id) {
-              if(err || !result) {
+          var mentorSkills = skillsArr.join(', ');
+          userNameFromID(participantSlackId, function(err, participantName) {
+              if(err || !participantName) {
                 return cb(err, null);
               }
               messageGroup(id, '@channel Hey ' + participantName + ', meet ' +

@@ -55,7 +55,7 @@ exports.setUpDialog = function(controller) {
           bot.reply(message, body['error']);
         } else {
           // uppercase ids must be passed into inviteToGroup
-          requestManager.inviteToGroup(groupName, participantSlackId, mentor, function(err, result) {
+          requestManager.inviteToGroup(groupName, participantSlackId, result, function(err, result) {
             if(err || !result) {
               return bot.reply(message, JSON.stringify(err));
             }
