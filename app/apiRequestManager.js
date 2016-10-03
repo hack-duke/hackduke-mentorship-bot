@@ -146,6 +146,7 @@ var groupIdFromName = exports.groupIdFromName = function(name, cb) {
 }
 
 // retrieves a user friendly name from a Slack ID
+// TODO: replace with separate calls to our mentor DB for real name (first/last)
 var userNameFromID = exports.userNameFromID = function(id, cb) {
   var endpoint = slack_url + `/users.list?token=${process.env.HACKDUKETOKEN}&pretty=1`
   var options = {
@@ -164,7 +165,7 @@ var userNameFromID = exports.userNameFromID = function(id, cb) {
     // loop through groups until name matches
     for(var i = 0; i < members.length; i++) {
       var member = members[i];
-      if(id == member['name']) {
+      if(id == member['id']) {
         return cb(null, member['name'])
       }
     }
