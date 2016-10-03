@@ -45,7 +45,7 @@ exports.setUpDialog = function(controller) {
       // group name is currently lowercase mentor id, dash, and lowercase participant id
       var groupName = mentorSlackId.toLowerCase() + '-' + participantSlackId.toLowerCase();
       requestManager.createGroup(groupName, function(err, body) {
-        if(err || !result) {
+        if(err || !body) {
           return bot.reply(message, JSON.stringify(err));
         }
         // only reply with error if there's an error that's not name_taken
@@ -55,11 +55,17 @@ exports.setUpDialog = function(controller) {
           bot.reply(message, body['error']);
         } else {
           // uppercase ids must be passed into inviteToGroup
-          requestManager.inviteToGroup(groupName, participantSlackId, result, function(err, result) {
-            if(err || !result) {
+          requestManager.inviteToGroup(groupName, participantSlackId, result, function(err, inviteResult) {
+            if(err || !inviteResult) {
               return bot.reply(message, JSON.stringify(err));
             }
-            return bot.reply(message, 'Mentor assigned');
+            if (!body['ok'] && body['error'] == 'name_taken') { // matched with previous mentor
+              return bot.reply(message, 'Looks like ' + result['first_name'] +
+              ' ' + result['last_name'] + ' from before can help you out again!\n');
+            }
+            else { // matched with new mentor
+              return bot.reply(message, 'You\'ve been matched with a mentor!');
+            }
           });
         }
       });
