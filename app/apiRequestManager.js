@@ -46,36 +46,37 @@ exports.createGroup = function(name, cb) {
 }
 
 // invites the participant, mentor, and bot to the group with the specified name
-exports.inviteToGroup = function(groupName, participant, mentor, cb) {
+exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
   groupIdFromName(groupName, function(err, id) {
     if(err || !id) {
       return cb(err, null);
     }
     var endpoint = slack_url + `/groups.invite?token=${process.env.HACKDUKETOKEN}&channel=${id}`
     // invite all three parties to the channel
-    invite(endpoint, participant, function(err, result){
-      invite(endpoint, mentor, function(err, result){
+    var mentorSlackId = mentor['slack_id'];
+    invite(endpoint, participantSlackId, function(err, result){
+      invite(endpoint, mentorSlackId, function(err, result){
         invite(endpoint, process.env.BOTID, function(err, result){
           if(err || !result) {
             return cb(err, null);
           }
-          // TODO: clean up nested calls?
-          userNameFromID(participant, function(err, participantName) {
-            if(err || !participantName) {
-              return cb(err, null);
-            }
-            userNameFromID(mentor, function(err, mentorName) {
-              if(err || !mentorName) {
+          var mentorFirstName = mentor['first_name'];
+          var mentorLastName = mentor['last_name'];
+          var mentorName = mentorFirstName + ' ' + mentorLastName;
+          var skillsArr = mentor['skills'];
+          var mentorSkills = mentor.join(', ');
+          userNameFromID(participantSlackId, function(err, id) {
+              if(err || !result) {
                 return cb(err, null);
               }
-              console.log(mentorName + ' womp ' + participantName + '\n');
-              messageGroup(id, '@channel Hey ' + participantName + ', meet ' + mentorName + '!', function(err, result) {
+              messageGroup(id, '@channel Hey ' + participantName + ', meet ' +
+              mentorName + '!\n' + mentorName + ' has experience using ' +
+              mentorSkills, function(err, result) {
                 if(err || !result) {
                   return cb(err, null);
                 }
                 cb(null, result);
               });
-            })
           })
         });
       });

@@ -21,7 +21,7 @@ exports.setUpDialog = function(controller) {
         botkitMongoStorage.mentors.save(data, function(err, result) {
           if(err || !result) {
             bot.reply(message, JSON.stringify(err));
-          } 
+          }
         });
       }
       bot.reply(message, 'Mentors updated!')
@@ -47,7 +47,7 @@ exports.setUpDialog = function(controller) {
       requestManager.createGroup(groupName, function(err, body) {
         if(err || !result) {
           return bot.reply(message, JSON.stringify(err));
-        } 
+        }
         // only reply with error if there's an error that's not name_taken
         // if name_taken, a group between the two users should've started before
         // and you can simply invite them to the group again if necessary
@@ -55,13 +55,13 @@ exports.setUpDialog = function(controller) {
           bot.reply(message, body['error']);
         } else {
           // uppercase ids must be passed into inviteToGroup
-          requestManager.inviteToGroup(groupName, participantSlackId, mentorSlackId, function(err, result) {
+          requestManager.inviteToGroup(groupName, participantSlackId, mentor, function(err, result) {
             if(err || !result) {
               return bot.reply(message, JSON.stringify(err));
             }
             return bot.reply(message, 'Mentor assigned');
           });
-        } 
+        }
       });
     });
   });
