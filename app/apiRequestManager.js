@@ -63,8 +63,7 @@ exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
           var mentorFirstName = mentor['first_name'];
           var mentorLastName = mentor['last_name'];
           var mentorName = mentorFirstName + ' ' + mentorLastName;
-          var skillsArr = mentor['skills'];
-          var mentorSkills = skillsArr.join(', ');
+          var mentorSkills = mentor['skills'].join(', ');
           userNameFromID(participantSlackId, function(err, participantName) {
               if(err || !participantName) {
                 return cb(err, null);
@@ -142,7 +141,6 @@ var groupIdFromName = exports.groupIdFromName = function(name, cb) {
 }
 
 // retrieves a user friendly name from a Slack ID
-// TODO: replace with separate calls to our mentor DB for real name (first/last)
 var userNameFromID = exports.userNameFromID = function(id, cb) {
   var endpoint = slack_url + `/users.list?token=${process.env.HACKDUKETOKEN}&pretty=1`
   var options = {
