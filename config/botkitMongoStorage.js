@@ -17,8 +17,18 @@ module.exports = function(config) {
         available: Boolean, // whether the mentor is open to judging at the moment
         slack_id: String
     });
+    
+    var sessionSchema = new mongoose.Schema({
+       mentor_id: String, 
+       participant_id: String,
+       Start_Time: {type: Date, default: Date.now}, 
+       Ongoing: Boolean, // whether mentor-participant session is ongoing
+       End_Time: {type: Date, default: Date.now},
+       Rating: Number // post-session participant rating of session 
+    });
 
     var Mentor = mongoose.model('Mentor', mentorSchema);
+    var Session = mongoose.model('Session', sessionSchema); 
 
     var unwrapFromList = function(cb) {
         return function(err, data) {
@@ -63,6 +73,7 @@ module.exports = function(config) {
                     } else {
                         Mentor.update({email: result.email}, {active: false}, {upsert:true}, function(err, result) {
                             cb(null, result);
+                         
                         })
                     }
                 });
