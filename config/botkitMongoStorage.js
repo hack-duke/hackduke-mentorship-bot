@@ -75,7 +75,6 @@ module.exports = function(config) {
                         Mentor.update({email: result.email}, {active: false}, {upsert:true}, function(err, result) {
                             cb(null, result);
                          
-                        })
                     //    Session.update({End_Time: Date.now}, {Ongoing: false})       
                      //   Session.save(function (err, Session) {
                        //     if(err) {
