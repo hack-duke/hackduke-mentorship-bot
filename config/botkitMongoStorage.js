@@ -18,6 +18,7 @@ module.exports = function(config) {
         slack_id: String
     });
     
+    
     var sessionSchema = new mongoose.Schema({
        mentor_id: String, 
        participant_id: String,
@@ -75,12 +76,13 @@ module.exports = function(config) {
                             cb(null, result);
                          
                         })
-                        Session.update({End_Time: Date.now}, {Ongoing: false}) 
-                        Session.save(function (err, Session) {
-                        if (err) {
-                            cb('You cannot save this session', null); 
-                          }
-                      });
+                        Session.update({End_Time: Date.now}, {Ongoing: false})       
+                        Session.save(function (err) {
+                            if(err) {
+                                cb("You cannot save this session", Session); 
+                            }
+                       });
+                    });
                     }
                 });
             },
@@ -98,6 +100,12 @@ module.exports = function(config) {
                         })
                         function(bot, message) 
                         var newSession = new Session({mentor_id: result.slack_id}, {participant_id: message['user']}, {Ongoing: true})
+                        Session.save(function(err) {
+                            if (err) {
+                                cb("You cannot save this session", Session); 
+                            }
+                           });
+                        });
                     }
                 });
             }
