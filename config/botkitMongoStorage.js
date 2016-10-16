@@ -77,11 +77,11 @@ module.exports = function(config) {
                          
                         })
                         Session.update({End_Time: Date.now}, {Ongoing: false})       
-                        Session.save(function (err, Session) {
-                            if(err) {
-                                throw new Error("Cannot save this session") 
-                            }
-                       });
+                     //   Session.save(function (err, Session) {
+                       //     if(err) {
+                         //       throw new Error("Cannot save this session") 
+                           // }
+                      // });
                     });
                     }
                 });
@@ -100,11 +100,11 @@ module.exports = function(config) {
                         })
                         function(bot, message) 
                         var newSession = new Session({mentor_id: result.slack_id}, {participant_id: message['user']}, {Ongoing: true})
-                        Session.save(function(err, Session) {
-                            if (err) {
-                                throw new Error("Cannot save this session") 
-                            }
-                           });
+                     //   Session.save(function(err, Session) {
+                       //     if (err) {
+                         //       throw new Error("Cannot save this session") 
+                           // }
+                          // });
                         });
                     }
                 });
