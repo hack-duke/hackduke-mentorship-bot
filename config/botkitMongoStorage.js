@@ -91,7 +91,7 @@ module.exports = function(config) {
                         Mentor.update({email: result.email}, {active: true}, {upsert:true}, function(err, result) {
                             cb(null, mentor);
                         })
-                        var newSession = new Session({mentor_id: mentor['slack_id'], {Start_Time: Date.now})
+                        var newSession = new Session({mentor_id: mentor['slack_id'], {Start_Time: Date.now}, {Ongoing: true})
                     }
                 });
             }
