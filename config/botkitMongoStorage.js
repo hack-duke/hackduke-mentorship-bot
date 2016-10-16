@@ -79,7 +79,7 @@ module.exports = function(config) {
                         Session.update({End_Time: Date.now}, {Ongoing: false})       
                         Session.save(function (err) {
                             if(err) {
-                                cb("You cannot save this session", Session); 
+                                throw err  
                             }
                        });
                     });
@@ -102,7 +102,7 @@ module.exports = function(config) {
                         var newSession = new Session({mentor_id: result.slack_id}, {participant_id: message['user']}, {Ongoing: true})
                         Session.save(function(err) {
                             if (err) {
-                                cb("You cannot save this session", Session); 
+                                throw err 
                             }
                            });
                         });
