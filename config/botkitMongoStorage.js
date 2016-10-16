@@ -76,6 +76,11 @@ module.exports = function(config) {
                          
                         })
                         Session.update({End_Time: Date.now}, {Ongoing: false}) 
+                        Session.save(function (err, Session) {
+                        if (err) {
+                            cb('You cannot save this session', null); 
+                          }
+                      });
                     }
                 });
             },
@@ -91,7 +96,8 @@ module.exports = function(config) {
                         Mentor.update({email: result.email}, {active: true}, {upsert:true}, function(err, result) {
                             cb(null, mentor);
                         })
-                        var newSession = new Session({mentor_id: mentor['slack_id'], {Start_Time: Date.now}, {Ongoing: true})
+                        function(bot, message) 
+                        var newSession = new Session({mentor_id: result.slack_id}, {participant_id: message['user']}, {Ongoing: true})
                     }
                 });
             }
