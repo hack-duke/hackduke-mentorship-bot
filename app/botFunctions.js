@@ -42,6 +42,7 @@ exports.setUpDialog = function(controller) {
       }
       var mentorSlackId = result['slack_id'];
       var participantSlackId = message['user'];
+
       // group name is currently lowercase mentor id, dash, and lowercase participant id
       var groupName = mentorSlackId.toLowerCase() + '-' + participantSlackId.toLowerCase();
       requestManager.createGroup(groupName, function(err, body) {
