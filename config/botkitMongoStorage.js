@@ -23,7 +23,7 @@ module.exports = function(config) {
        participant_id: String,
        Start_Time: {type: Date, default: Date.now}, 
        Ongoing: Boolean, // whether mentor-participant session is ongoing
-       End_Time: {type: Date, default: Date.now},
+       End_Time: Date,
        Rating: Number // post-session participant rating of session 
     });
 
@@ -70,11 +70,12 @@ module.exports = function(config) {
                 Mentor.findOne({slack_id: slackId, active: true}, function(err, result) {
                     if(!result || err) {
                         cb('You don\'t have a mentorship session to end', null);
-                    } else {
+                    } else 
                         Mentor.update({email: result.email}, {active: false}, {upsert:true}, function(err, result) {
                             cb(null, result);
                          
                         })
+                        Session.update({End_Time: Date.now}, {Ongoing: false}) 
                     }
                 });
             },
@@ -90,6 +91,7 @@ module.exports = function(config) {
                         Mentor.update({email: result.email}, {active: true}, {upsert:true}, function(err, result) {
                             cb(null, mentor);
                         })
+                        var newSession = new Session({mentor_id: mentor['slack_id'], {Start_Time: Date.now})
                     }
                 });
             }
