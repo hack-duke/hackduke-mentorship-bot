@@ -16,7 +16,7 @@ exports.setUpDialog = function(controller) {
           skills: mentor['role']['skills'],
           active: false,
           available: true,
-          slack_id: 'U0Q56HGFR'
+          slack_id: 'U0QMVCMM5'
         }
         botkitMongoStorage.mentors.save(data, function(err, result) {
           if(err || !result) {
