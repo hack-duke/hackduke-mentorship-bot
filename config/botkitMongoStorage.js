@@ -22,10 +22,10 @@ module.exports = function(config) {
     var sessionSchema = new mongoose.Schema({
        mentor_id: String, 
        participant_id: String,
-       Start_Time: {type: Date, default: Date.now}, 
-       Ongoing: Boolean, // whether mentor-participant session is ongoing
-       End_Time: Date,
-       Rating: Number // post-session participant rating of session 
+       start_Time: {type: Date, default: Date.now}, 
+       ongoing: Boolean, // whether mentor-participant session is ongoing
+       end_Time: Date,
+       rating: Number // post-session participant rating of session 
     });
 
     var Mentor = mongoose.model('Mentor', mentorSchema);
@@ -76,12 +76,12 @@ module.exports = function(config) {
                             cb(null, result);
                          
                         })
-                    //    Session.update({End_Time: Date.now}, {Ongoing: false})       
-                     //   Session.save(function (err, Session) {
-                       //     if(err) {
-                         //       throw new Error("Cannot save this session") 
-                           // }
-                      // });
+                        Session.findOne({mentor_id: slackId, ongoing: true}, function(err) {
+                            if(err) {
+                                cb('Cannot find session', null);
+                            } else 
+                                Session.update({End_Time: Date.now}, {Ongoing: false})                   
+                        }                    
                     });
                     }
                 });
@@ -98,13 +98,13 @@ module.exports = function(config) {
                         Mentor.update({email: result.email}, {active: true}, {upsert:true}, function(err, result) {
                             cb(null, mentor);
                         })
-                     //   function(bot, message) 
-                    //    var newSession = new Session({mentor_id: result.slack_id}, {participant_id: message['user']}, {Ongoing: true})
-                     //   Session.save(function(err, Session) {
-                       //     if (err) {
-                         //       throw new Error("Cannot save this session") 
-                           // }
-                          // });
+                      function(bot, message) 
+                      var newSession = new Session({mentor_id: result.slack_id}, {participant_id: message['user']}, {ongoing: true})
+                      Session.save(function(err, newSession) {
+                      if (err) {
+                         throw new Error("Cannot save this session") 
+                      }
+                            });
                         });
                     }
                 });
