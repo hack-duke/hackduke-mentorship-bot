@@ -85,7 +85,7 @@ exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
 }
 
 var messageGroup = exports.messageGroup = function(id, text, cb) {
-  var postMessageUrl = slack_url + `/chat.postMessage?token=${process.env.HACKDUKETOKEN}`
+  var postMessageUrl = slack_url + `/chat.postMessage?token=${process.env.HACKDUKETOKEN}&icon_url=https://www.hackduke.org/favicon.ico`
   var endpoint = postMessageUrl + `&channel=${id}&text=${text}&username=mentorbot&mrkdwn=true`
   var options = {
     method: 'get',
