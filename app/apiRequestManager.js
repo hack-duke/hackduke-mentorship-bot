@@ -68,14 +68,17 @@ exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
               if(err || !participantName) {
                 return cb(err, null);
               }
-              messageGroup(id, '@channel Hey ' + participantName + ', meet ' +
+              messageGroup(id, '<!channel> Hey ' + participantName + ', meet ' +
               mentorName + '!\n' + mentorName + ' has experience using ' +
-              mentorSkills, function(err, result) {
-                if(err || !result) {
-                  return cb(err, null);
-                }
-                cb(null, result);
-              });
+              mentorSkills);
+              messageGroup(id, 'This session is to help ' + participantName +
+              ' with a specific problem- once you\'re done, let me know to end session by typing "@mentorbot end session!""',
+              function(err, result) {
+               if(err || !result) {
+                 return cb(err, null);
+               }
+               cb(null, result);
+             });
           })
         });
       });
