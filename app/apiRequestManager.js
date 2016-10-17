@@ -63,16 +63,14 @@ exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
           var mentorFirstName = mentor['first_name'];
           var mentorLastName = mentor['last_name'];
           var mentorName = mentorFirstName + ' ' + mentorLastName;
-          var mentorSkills = mentor['skills'].join(', ');
+          // var mentorSkills = mentor['skills'].join(', '); // not shown anymore
           userNameFromID(participantSlackId, function(err, participantName) {
               if(err || !participantName) {
                 return cb(err, null);
               }
               messageGroup(id, '<!channel> Hey ' + participantName + ', meet ' +
-              mentorName + '!\n' + mentorName + ' has experience using ' +
-              mentorSkills);
-              messageGroup(id, 'This session is to help ' + participantName +
-              ' with a specific problem- once you\'re done, let me know to end session by typing "@mentorbot end session!""',
+              mentorName + '!\n' + 'This session is to help ' + participantName +
+              ' with a specific problem. Once you\'re done, let me know to end session by typing `@mentorbot end session`!',
               function(err, result) {
                if(err || !result) {
                  return cb(err, null);
@@ -88,7 +86,7 @@ exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
 
 var messageGroup = exports.messageGroup = function(id, text, cb) {
   var postMessageUrl = slack_url + `/chat.postMessage?token=${process.env.HACKDUKETOKEN}`
-  var endpoint = postMessageUrl + `&channel=${id}&text=${text}&username=mentorbot`
+  var endpoint = postMessageUrl + `&channel=${id}&text=${text}&username=mentorbot&mrkdwn=true`
   var options = {
     method: 'get',
     url: endpoint,

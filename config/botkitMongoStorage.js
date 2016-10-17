@@ -8,8 +8,8 @@ module.exports = function(config) {
     mongoose.Promise = global.Promise
     mongoose.connect(config.mongoUri)
 
-    var mentorSchema = new mongoose.Schema({ 
-        first_name: String, 
+    var mentorSchema = new mongoose.Schema({
+        first_name: String,
         last_name: String,
         email: String,
         skills: [String],
