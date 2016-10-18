@@ -1,4 +1,5 @@
 var requestManager = require('./apiRequestManager.js')
+var decisionTree = require('./skillsDecisionTree.js')
 var botkitMongoStorage = require('../config/botkitMongoStorage')({mongoUri: process.env.MONGOURI})
 
 exports.setUpDialog = function(controller) {
@@ -16,7 +17,7 @@ exports.setUpDialog = function(controller) {
           skills: mentor['role']['skills'],
           active: false,
           available: true,
-          slack_id: 'U0Q56HGFR'
+          slack_id: 'U2Q0B7E2U'
         }
         botkitMongoStorage.mentors.save(data, function(err, result) {
           if(err || !result) {
@@ -76,15 +77,6 @@ exports.setUpDialog = function(controller) {
     });
   });
 
-  controller.on('direct_message,mention,direct_mention',function(bot,message) {
-    bot.api.reactions.add({
-      timestamp: message.ts,
-      channel: message.channel,
-      name: 'robot_face',
-    },function(err) {
-      if (err) { console.log(err) }
-      bot.reply(message,'I heard you loud and clear boss.');
-    });
-  });
+  decisionTree.setup(controller)
 
 }

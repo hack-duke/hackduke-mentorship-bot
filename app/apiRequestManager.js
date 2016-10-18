@@ -101,6 +101,7 @@ var invite = exports.invite = function(currEndpoint, userId, cb) {
   });
 }
 
+
 // finds the groupId from the name of a group
 var groupIdFromName = exports.groupIdFromName = function(name, cb) {
   var endpoint = slack_url + `/groups.list?token=${process.env.HACKDUKETOKEN}&name=${name}&pretty=1`
@@ -125,5 +126,32 @@ var groupIdFromName = exports.groupIdFromName = function(name, cb) {
       }
     }
     cb('Group with that name not found', null);
+  })
+}
+
+// retrieves a user friendly name from a Slack ID
+var userNameFromID = exports.userNameFromID = function(id, cb) {
+  var endpoint = slack_url + `/users.list?token=${process.env.HACKDUKETOKEN}&pretty=1`
+  var options = {
+    method: 'get',
+    url: endpoint,
+  }
+  Request(options, function (err, res, body) {
+    if (err || !res) {
+      return cb(err, null);
+    }
+    var parsedBody = JSON.parse(body);
+    if(!parsedBody['ok']) {
+      return cb(parsedBody['error'], null);
+    }
+    var members = parsedBody['members'];
+    // loop through groups until name matches
+    for(var i = 0; i < members.length; i++) {
+      var member = members[i];
+      if(id == member['id']) {
+        return cb(null, member['name'])
+      }
+    }
+    cb('Member with ID ' + id + ' not found', null);
   })
 }
