@@ -14,6 +14,7 @@ module.exports = function(config) {
         email: String,
         skills: [String],
         available: Boolean, // whether the mentor is open to judging at the moment
+        active: Boolean,
         slack_id: String
     });
     
@@ -47,7 +48,7 @@ module.exports = function(config) {
             },
             // saves mentor to database
             save: function(data, cb) {
-                Mentor.findOneAndUpdate({email: data.email}, data, {upsert:true}, function(err, result) {
+                Mentor.findOneAndUpdate({email: data['email']}, data, {upsert:true}, function(err, result) {
                     cb(null, result);
                 });
             },
@@ -60,7 +61,7 @@ module.exports = function(config) {
                     if(!result || err) {
                         cb('You aren\'t a mentor', null);
                     } else {
-                        Mentor.update({email: result.email}, {available: setAvailability}, {upsert:true}, function(err, result) {
+                        Mentor.update({email: result['email']}, {available: setAvailability}, {upsert:true}, function(err, result) {
                             cb(null, result);
                         });
                     }
@@ -68,24 +69,18 @@ module.exports = function(config) {
             },
             // ends mentorship session by setting ongoing to false
             endSession: function(slackId, cb) {
-                Mentor.findOne({slack_id: slackId, active: true}, function(err, result) {
+                Mentor.findOneAndUpdate({slack_id: slackId, active: true}, {active: false}, {upsert: false}, function(err, result) {
                     if(!result || err) {
-                        return cb('You cannot end this session', null);
+                        return cb('You cannot end this session!', null);
                     }
-                });
-                Session.findOne({mentor_id: slackId, ongoing: true}, function(err, result) {
-                    if(!result || err) {
-                        return cb('Could not find session to end', null);
-                    } else {
+                    Session.findOne({mentor_id: slackId, ongoing: true}, function(err, result) {
+                        if(!result || err) {
+                            return cb('Could not find session to end!', null);
+                        } 
                         Session.update({mentor_id: slackId, ongoing: true},{end_time: Date.now(), ongoing: false}, {upsert:false}, function(err, result) {
-                            cb(null, result);
+                                cb(null, result);
                         });
-                        Mentor.update({mentor_id: slackId, active: true}, {active: false}, {upsert: false}, function(err, result) {
-                          if(!result || err) {
-                            cb('Error updating mentor to active: false')
-                          }
-                        });
-                    }
+                    });
                 });
             },
                
@@ -93,14 +88,12 @@ module.exports = function(config) {
             startSession: function(skill, participantslackId, cb) {
                 // capitalizes the skill because they're store in the database capitalized (Python, Swift, etc.)
                 var capitalized = skill.charAt(0).toUpperCase() + skill.substring(1).toLowerCase();
-                Mentor.findOne({skills: capitalized, active: false, available: true}, function(err, result) {
-                    if(!result || err) {
-                       return cb('No mentors available for that skill, please try again later', result);
+                Mentor.findOneAndUpdate({skills: capitalized, active: false, available: true}, {active: true}, {upsert:false}, function(err, mentor) {
+                    if(!mentor || err) {
+                       return cb('No mentors available for that skill, please try again later', null);
                     } else {
-                        console.log(result)
-                        var mentor = result;
-                        Session.findOne({mentor_id: mentor['slack_id'], ongoing: true}, function(err, result) {
-                           if(result) {
+                        Session.findOne({mentor_id: mentor['slack_id'], ongoing: true}, function(err, session) {
+                           if(session) {
                              return cb('A session with this mentor is already ongoing', null);
                            } 
                            if (err) {
@@ -108,32 +101,14 @@ module.exports = function(config) {
                            }
                            else {
                               var newSession = new Session({mentor_id: mentor['slack_id'], participant_id: participantslackId, 
-                                                            start_time: Date.now(), ongoing: true, session_skill: capitalized})
-                                                            
+                                                            start_time: Date.now(), ongoing: true, session_skill: capitalized})                   
                               newSession.save(function(err, newSession) {
                                   if(!newSession || err) {
                                     cb(err, null)
                                   }
-                                  else {
-                                    Mentor.findOne({email: mentor['email']}, function(err, result) {
-                                      if(!result || err) {
-                                          return cb('Error finding mentor to set active: true', null)
-                                      }
-                                      result['active'] = true
-                                      console.log(result)
-                                      
-                                      Mentor.findOneAndUpdate({email: mentor['email']}, result, function(err, result) {
-                                        if (!result || err) {
-                                          return cb('Error updating mentor to false', null)
-                                        }
-                                        console.log(result)
-                                        cb(null, newSession)
-                                      });
-                                    });
-                                  }
+                                  cb(null, newSession)
                               });
                            }
-                          
                         });
                     }
                 });
