@@ -48,38 +48,44 @@ exports.setUpDialog = function(controller) {
           if(err || !participantName) {
             return cb(err, null);
           }
-          // TODO: replace mentor SlackID with name from MongoDB (or session object)
-          // get rid of spaces and periods (not allowed in channel names)
-          var processedName = participantName.toLowerCase().replace(/[. ]/gi, '');
-          var groupName = processedName + '-' + mentorSlackId.toLowerCase(); // see issue #6 for documentation
-          console.log('group name ' + groupName);
-          requestManager.createGroup(groupName, function(err, body) {
-            if(err || !body) {
-              return bot.reply(message, JSON.stringify(err));
-            }
-            // only reply with error if there's an error that's not name_taken
-            // if name_taken, a group between the two users should've started before
-            // and you can simply invite them to the group again if necessary
-
-            if(!body['ok'] && body['error'] != 'name_taken') {
-              bot.reply(message, body['error']);
-            } else {
-              // uppercase ids must be passed into inviteToGroup
-              requestManager.inviteToGroup(groupName, participantSlackId, result, function(err, inviteResult) {
-                if(err || !inviteResult) {
+          requestManager.userNameFromID(mentorSlackId, function(err, mentorName) {
+              if(err || !mentorName) {
+                return cb(err, null);
+              }
+              // TODO: replace mentor SlackID with name from MongoDB (or session object)
+              // get rid of spaces and periods (not allowed in channel names)
+              var fixedUserName = participantName.toLowerCase().replace(/[. ]/gi, '');
+              var fixedMentorName = mentorName.toLowerCase().replace(/[. ]/gi, '');
+              var groupName = fixedUserName + '-' + fixedMentorName; // see issue #6 for documentation
+              requestManager.createGroup(groupName, function(err, body) {
+                if(err || !body) {
                   return bot.reply(message, JSON.stringify(err));
                 }
-                if (!body['ok'] && body['error'] == 'name_taken') { // matched with previous mentor
-                  return bot.reply(message, 'Looks like ' + result['first_name'] +
-                  ' ' + result['last_name'] + ' from before can help you out again!\n');
+                // only reply with error if there's an error that's not name_taken
+                // if name_taken, a group between the two users should've started before
+                // and you can simply invite them to the group again if necessary
+
+                if(!body['ok'] && body['error'] != 'name_taken') {
+                  bot.reply(message, body['error']);
                 }
-                else { // matched with new mentor
-                  return bot.reply(message, 'You\'ve been matched with a mentor!');
+                else {
+                  // uppercase ids must be passed into inviteToGroup
+                  requestManager.inviteToGroup(groupName, participantSlackId, result, function(err, inviteResult) {
+                    if(err || !inviteResult) {
+                      return bot.reply(message, JSON.stringify(err));
+                    }
+                    if (!body['ok'] && body['error'] == 'name_taken') { // matched with previous mentor
+                      return bot.reply(message, 'Looks like ' + result['first_name'] +
+                      ' ' + result['last_name'] + ' from before can help you out again!\n');
+                    }
+                    else { // matched with new mentor
+                      return bot.reply(message, 'You\'ve been matched with a mentor!');
+                    }
+                  });
                 }
               });
-            }
           });
-      })
+      });
     });
   });
 
