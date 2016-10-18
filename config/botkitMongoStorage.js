@@ -117,5 +117,4 @@ module.exports = function(config) {
         };
 
     return storage
-    
 };
