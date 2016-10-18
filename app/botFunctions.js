@@ -1,4 +1,5 @@
 var requestManager = require('./apiRequestManager.js')
+var decisionTree = require('./skillsDecisionTree.js')
 var botkitMongoStorage = require('../config/botkitMongoStorage')({mongoUri: process.env.MONGOURI})
 
 exports.setUpDialog = function(controller) {
@@ -21,7 +22,7 @@ exports.setUpDialog = function(controller) {
         botkitMongoStorage.mentors.save(data, function(err, result) {
           if(err || !result) {
             bot.reply(message, JSON.stringify(err));
-          } 
+          }
         });
       }
       bot.reply(message, 'Mentors updated!')
@@ -43,26 +44,48 @@ exports.setUpDialog = function(controller) {
       var mentorSlackId = result['slack_id'];
       var participantSlackId = message['user'];
 
-      // group name is currently lowercase mentor id, dash, and lowercase participant id
-      var groupName = mentorSlackId.toLowerCase() + '-' + participantSlackId.toLowerCase();
-      requestManager.createGroup(groupName, function(err, body) {
-        if(err || !result) {
-          return bot.reply(message, JSON.stringify(err));
-        } 
-        // only reply with error if there's an error that's not name_taken
-        // if name_taken, a group between the two users should've started before
-        // and you can simply invite them to the group again if necessary
-        if(!body['ok'] && body['error'] != 'name_taken') {
-          bot.reply(message, body['error']);
-        } else {
-          // uppercase ids must be passed into inviteToGroup
-          requestManager.inviteToGroup(groupName, participantSlackId, mentorSlackId, function(err, result) {
-            if(err || !result) {
-              return bot.reply(message, JSON.stringify(err));
-            }
-            return bot.reply(message, 'Mentor assigned');
+      // get the user's SlackName (guaranteed unique)
+      requestManager.userNameFromID(participantSlackId, function(err, participantName) {
+          if(err || !participantName) {
+            return cb(err, null);
+          }
+          requestManager.userNameFromID(mentorSlackId, function(err, mentorName) {
+              if(err || !mentorName) {
+                return cb(err, null);
+              }
+              // TODO: replace mentor SlackID with name from MongoDB (or session object)
+              // get rid of spaces and periods (not allowed in channel names)
+              var fixedUserName = participantName.toLowerCase().replace(/[. ]/gi, '');
+              var fixedMentorName = mentorName.toLowerCase().replace(/[. ]/gi, '');
+              var groupName = fixedUserName + '-' + fixedMentorName; // see issue #6 for documentation
+              requestManager.createGroup(groupName, function(err, body) {
+                if(err || !body) {
+                  return bot.reply(message, JSON.stringify(err));
+                }
+                // only reply with error if there's an error that's not name_taken
+                // if name_taken, a group between the two users should've started before
+                // and you can simply invite them to the group again if necessary
+
+                if(!body['ok'] && body['error'] != 'name_taken') {
+                  bot.reply(message, body['error']);
+                }
+                else {
+                  // uppercase ids must be passed into inviteToGroup
+                  requestManager.inviteToGroup(groupName, participantSlackId, result, function(err, inviteResult) {
+                    if(err || !inviteResult) {
+                      return bot.reply(message, JSON.stringify(err));
+                    }
+                    if (!body['ok'] && body['error'] == 'name_taken') { // matched with previous mentor
+                      return bot.reply(message, 'Looks like ' + result['first_name'] +
+                      ' ' + result['last_name'] + ' from before can help you out again!\n');
+                    }
+                    else { // matched with new mentor
+                      return bot.reply(message, 'You\'ve been matched with a mentor!');
+                    }
+                  });
+                }
+              });
           });
-        } 
       });
     });
   });
@@ -77,15 +100,6 @@ exports.setUpDialog = function(controller) {
     });
   });
 
-  controller.on('direct_message,mention,direct_mention',function(bot,message) {
-    bot.api.reactions.add({
-      timestamp: message.ts,
-      channel: message.channel,
-      name: 'robot_face',
-    },function(err) {
-      if (err) { console.log(err) }
-      bot.reply(message,'I heard you loud and clear boss.');
-    });
-  });
+  decisionTree.setup(controller)
 
 }

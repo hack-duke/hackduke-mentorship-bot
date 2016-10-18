@@ -8,8 +8,8 @@ module.exports = function(config) {
     mongoose.Promise = global.Promise
     mongoose.connect(config.mongoUri)
 
-    var mentorSchema = new mongoose.Schema({ 
-        first_name: String, 
+    var mentorSchema = new mongoose.Schema({
+        first_name: String,
         last_name: String,
         email: String,
         skills: [String],
@@ -17,19 +17,19 @@ module.exports = function(config) {
         available: Boolean, // whether the mentor is open to judging at the moment
         slack_id: String
     });
-    
-    
+
+
     var sessionSchema = new mongoose.Schema({
-       mentor_id: String, 
+       mentor_id: String,
        participant_id: String,
-       Start_Time: {type: Date, default: Date.now}, 
+       Start_Time: {type: Date, default: Date.now},
        Ongoing: Boolean, // whether mentor-participant session is ongoing
        End_Time: Date,
-       Rating: Number // post-session participant rating of session 
+       Rating: Number // post-session participant rating of session
     });
 
     var Mentor = mongoose.model('Mentor', mentorSchema);
-    var Session = mongoose.model('Session', sessionSchema); 
+    var Session = mongoose.model('Session', sessionSchema);
 
     var unwrapFromList = function(cb) {
         return function(err, data) {
@@ -71,17 +71,17 @@ module.exports = function(config) {
                 Mentor.findOne({slack_id: slackId, active: true}, function(err, result) {
                     if(!result || err) {
                         cb('You don\'t have a mentorship session to end', null);
-                    } else 
+                    }
+                    else {
                         Mentor.update({email: result.email}, {active: false}, {upsert:true}, function(err, result) {
                             cb(null, result);
-                         
-                    //    Session.update({End_Time: Date.now}, {Ongoing: false})       
-                     //   Session.save(function (err, Session) {
-                       //     if(err) {
-                         //       throw new Error("Cannot save this session") 
-                           // }
-                      // });
-                    });
+                        });
+                        //    Session.update({End_Time: Date.now}, {Ongoing: false})
+                         //   Session.save(function (err, Session) {
+                           //     if(err) {
+                             //       throw new Error("Cannot save this session")
+                               // }
+                          // });
                     }
                 });
             },
@@ -92,21 +92,21 @@ module.exports = function(config) {
                 Mentor.findOne({skills: capitalized, available: true, active: false}, function(err, result) {
                     if(!result || err) {
                         cb('No mentors available for that skill, please try again later', result);
-                    } else {
+                    }
+                    else {
                         var mentor = result;
                         Mentor.update({email: result.email}, {active: true}, {upsert:true}, function(err, result) {
                             cb(null, mentor);
                         })
-                     //   function(bot, message) 
+                     //   function(bot, message)
                     //    var newSession = new Session({mentor_id: result.slack_id}, {participant_id: message['user']}, {Ongoing: true})
                      //   Session.save(function(err, Session) {
                        //     if (err) {
-                         //       throw new Error("Cannot save this session") 
+                         //       throw new Error("Cannot save this session")
                            // }
                           // });
-                        });
                     }
-                });
+                 });
             }
         },
     };

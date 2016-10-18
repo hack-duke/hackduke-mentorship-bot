@@ -46,25 +46,38 @@ exports.createGroup = function(name, cb) {
 }
 
 // invites the participant, mentor, and bot to the group with the specified name
-exports.inviteToGroup = function(groupName, participant, mentor, cb) {
+exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
   groupIdFromName(groupName, function(err, id) {
     if(err || !id) {
       return cb(err, null);
     }
     var endpoint = slack_url + `/groups.invite?token=${process.env.HACKDUKETOKEN}&channel=${id}`
     // invite all three parties to the channel
-    invite(endpoint, participant, function(err, result){
-      invite(endpoint, mentor, function(err, result){
+    var mentorSlackId = mentor['slack_id'];
+    invite(endpoint, participantSlackId, function(err, result){
+      invite(endpoint, mentorSlackId, function(err, result){
         invite(endpoint, process.env.BOTID, function(err, result){
           if(err || !result) {
             return cb(err, null);
           }
-          messageGroup(id, '@channel Here\'s a mentor to help you!', function(err, result) {
-            if(err || !result) {
-              return cb(err, null);
-            }
-            cb(null, result);
-          });
+          var mentorFirstName = mentor['first_name'];
+          var mentorLastName = mentor['last_name'];
+          var mentorName = mentorFirstName + ' ' + mentorLastName;
+          // var mentorSkills = mentor['skills'].join(', '); // not shown anymore
+          userNameFromID(participantSlackId, function(err, participantName) {
+              if(err || !participantName) {
+                return cb(err, null);
+              }
+              messageGroup(id, '<!channel> Hey ' + participantName + ', meet ' +
+              mentorName + '!\n' + 'This session is to help ' + participantName +
+              ' with a specific problem. Once you\'re done, let me know to end session by typing `@mentorbot end session`!',
+              function(err, result) {
+               if(err || !result) {
+                 return cb(err, null);
+               }
+               cb(null, result);
+             });
+          })
         });
       });
     });
@@ -72,8 +85,8 @@ exports.inviteToGroup = function(groupName, participant, mentor, cb) {
 }
 
 var messageGroup = exports.messageGroup = function(id, text, cb) {
-  var postMessageUrl = slack_url + `/chat.postMessage?token=${process.env.HACKDUKETOKEN}`
-  var endpoint = postMessageUrl + `&channel=${id}&text=${text}&username=mentorbot`
+  var postMessageUrl = slack_url + `/chat.postMessage?token=${process.env.HACKDUKETOKEN}&icon_url=https://www.hackduke.org/favicon.ico`
+  var endpoint = postMessageUrl + `&channel=${id}&text=${text}&username=mentorbot&mrkdwn=true`
   var options = {
     method: 'get',
     url: endpoint,
@@ -101,6 +114,7 @@ var invite = exports.invite = function(currEndpoint, userId, cb) {
   });
 }
 
+
 // finds the groupId from the name of a group
 var groupIdFromName = exports.groupIdFromName = function(name, cb) {
   var endpoint = slack_url + `/groups.list?token=${process.env.HACKDUKETOKEN}&name=${name}&pretty=1`
@@ -125,5 +139,32 @@ var groupIdFromName = exports.groupIdFromName = function(name, cb) {
       }
     }
     cb('Group with that name not found', null);
+  })
+}
+
+// retrieves a user friendly name from a Slack ID
+var userNameFromID = exports.userNameFromID = function(id, cb) {
+  var endpoint = slack_url + `/users.list?token=${process.env.HACKDUKETOKEN}&pretty=1`
+  var options = {
+    method: 'get',
+    url: endpoint,
+  }
+  Request(options, function (err, res, body) {
+    if (err || !res) {
+      return cb(err, null);
+    }
+    var parsedBody = JSON.parse(body);
+    if(!parsedBody['ok']) {
+      return cb(parsedBody['error'], null);
+    }
+    var members = parsedBody['members'];
+    // loop through groups until name matches
+    for(var i = 0; i < members.length; i++) {
+      var member = members[i];
+      if(id == member['id']) {
+        return cb(null, member['name'])
+      }
+    }
+    cb('Member with ID ' + id + ' not found', null);
   })
 }
