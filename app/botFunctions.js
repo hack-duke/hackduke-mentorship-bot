@@ -16,7 +16,7 @@ exports.setUpDialog = function(controller) {
           skills: mentor['role']['skills'],
           active: false,
           available: true,
-          slack_id: 'U0Q56HGFR'
+          slack_id: 'U0QMVCMM5'
         }
         botkitMongoStorage.mentors.save(data, function(err, result) {
           if(err || !result) {
@@ -42,6 +42,7 @@ exports.setUpDialog = function(controller) {
       }
       var mentorSlackId = result['slack_id'];
       var participantSlackId = message['user'];
+
       // group name is currently lowercase mentor id, dash, and lowercase participant id
       var groupName = mentorSlackId.toLowerCase() + '-' + participantSlackId.toLowerCase();
       requestManager.createGroup(groupName, function(err, body) {
