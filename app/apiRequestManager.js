@@ -114,6 +114,7 @@ var invite = exports.invite = function(currEndpoint, userId, cb) {
   });
 }
 
+
 // finds the groupId from the name of a group
 var groupIdFromName = exports.groupIdFromName = function(name, cb) {
   var endpoint = slack_url + `/groups.list?token=${process.env.HACKDUKETOKEN}&name=${name}&pretty=1`
