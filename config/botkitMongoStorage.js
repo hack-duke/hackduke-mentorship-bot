@@ -100,6 +100,13 @@ module.exports = function(config) {
                     if(!mentor || err) {
                       return cb('No mentors exist for that skill, please try again later', null);
                     } else if(!mentor['available']) {
+                      var queuedParticipant = new Queue({participant_id: participantslackId, start_time: Date.now(), session_skill: capitalized});
+                      queuedParticipant.save(function(err, queuedParticipant)) {
+                        if(!newSession || err) {
+                          cb(err, null)
+                        }
+                        cb(null, newSession)
+                      }
                       return cb('No mentors are currently available for that skill, but we will assign one to you as soon as one is available!', null);
                     } else {
                         Session.findOne({mentor_id: mentor['slack_id'], ongoing: true}, function(err, session) {
