@@ -31,7 +31,7 @@ exports.setUpDialog = function(controller) {
 
   // according to the skill/topic asked about, find a mentor, create a group, and invite all parties
   controller.hears('help (.*)', 'direct_message,direct_mention', function(bot,message) {
-    var skills = ['ios'];
+    var skills = ['frontend', 'mobile', 'backend', 'web', 'math'];
     var skill = message.match[1];
     // skill inputted must match one of the ones listed above, should move to database
     if(skills.indexOf(skill.trim().toLowerCase()) == -1) {
@@ -72,7 +72,7 @@ exports.setUpDialog = function(controller) {
                 }
                 else {
                   // uppercase ids must be passed into inviteToGroup
-                  requestManager.inviteToGroup(groupName, participantSlackId, mentorName, mentorSlackId, 
+                  requestManager.inviteToGroup(groupName, participantSlackId, mentorName, mentorSlackId,
                                                result['session_skill'], function(err, inviteResult) {
                     if(err || !inviteResult) {
                       return bot.reply(message, JSON.stringify(err));
