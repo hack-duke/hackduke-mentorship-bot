@@ -46,31 +46,26 @@ exports.createGroup = function(name, cb) {
 }
 
 // invites the participant, mentor, and bot to the group with the specified name
-exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
+exports.inviteToGroup = function(groupName, participantSlackId, mentorName, mentorSlackId, skill, cb) {
   groupIdFromName(groupName, function(err, id) {
     if(err || !id) {
       return cb(err, null);
     }
     var endpoint = slack_url + `/groups.invite?token=${process.env.HACKDUKETOKEN}&channel=${id}`
     // invite all three parties to the channel
-    var mentorSlackId = mentor['slack_id'];
     invite(endpoint, participantSlackId, function(err, result){
       invite(endpoint, mentorSlackId, function(err, result){
         invite(endpoint, process.env.BOTID, function(err, result){
           if(err || !result) {
             return cb(err, null);
           }
-          var mentorFirstName = mentor['first_name'];
-          var mentorLastName = mentor['last_name'];
-          var mentorName = mentorFirstName + ' ' + mentorLastName;
-          // var mentorSkills = mentor['skills'].join(', '); // not shown anymore
           userNameFromID(participantSlackId, function(err, participantName) {
               if(err || !participantName) {
                 return cb(err, null);
               }
               messageGroup(id, '<!channel> Hey ' + participantName + ', meet ' +
               mentorName + '!\n' + 'This session is to help ' + participantName +
-              ' with a specific problem. Once you\'re done, let me know by typing `@mentorbot end session`. After 30 minutes, the session will end automatically and ' + mentorName +
+              ' with ' + skill  + '. ' +  Once you\'re done, let me know by typing `@mentorbot end session`. After 30 minutes, the session will end automatically and ' + mentorName +
               ' will be set to _away_. (Don\'t worry! You can still message each other in this chat)',
               function(err, result) {
                if(err || !result) {

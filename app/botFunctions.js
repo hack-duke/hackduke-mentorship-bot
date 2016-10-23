@@ -31,27 +31,28 @@ exports.setUpDialog = function(controller) {
 
   // according to the skill/topic asked about, find a mentor, create a group, and invite all parties
   controller.hears('help (.*)', 'direct_message,direct_mention', function(bot,message) {
-    var skills = ['frontend', 'mobile', 'backend', 'web', 'math'];
+    var skills = ['ios'];
     var skill = message.match[1];
     // skill inputted must match one of the ones listed above, should move to database
     if(skills.indexOf(skill.trim().toLowerCase()) == -1) {
       return bot.reply(message, `Please select one of the following skills: ${skills.join(', ')}`);
     }
-    botkitMongoStorage.mentors.startSession(skill, function(err, result) {
+    var participantSlackId = message['user'];
+
+    botkitMongoStorage.mentors.startSession(skill, participantSlackId, function(err, result) {
       if(err || !result) {
         return bot.reply(message, err);
       }
-      var mentorSlackId = result['slack_id'];
-      var participantSlackId = message['user'];
+      var mentorSlackId = result['mentor_id'];
 
       // get the user's SlackName (guaranteed unique)
       requestManager.userNameFromID(participantSlackId, function(err, participantName) {
           if(err || !participantName) {
-            return cb(err, null);
+            return bot.reply(message, err);
           }
           requestManager.userNameFromID(mentorSlackId, function(err, mentorName) {
               if(err || !mentorName) {
-                return cb(err, null);
+                return bot.reply(message, err);
               }
               // TODO: replace mentor SlackID with name from MongoDB (or session object)
               // get rid of spaces and periods (not allowed in channel names)
@@ -71,13 +72,13 @@ exports.setUpDialog = function(controller) {
                 }
                 else {
                   // uppercase ids must be passed into inviteToGroup
-                  requestManager.inviteToGroup(groupName, participantSlackId, result, function(err, inviteResult) {
+                  requestManager.inviteToGroup(groupName, participantSlackId, mentorName, mentorSlackId, 
+                                               result['session_skill'], function(err, inviteResult) {
                     if(err || !inviteResult) {
                       return bot.reply(message, JSON.stringify(err));
                     }
                     if (!body['ok'] && body['error'] == 'name_taken') { // matched with previous mentor
-                      return bot.reply(message, 'Looks like ' + result['first_name'] +
-                      ' ' + result['last_name'] + ' from before can help you out again!\n');
+                      return bot.reply(message, 'Looks like ' + mentorName + ' from before can help you out again!\n');
                     }
                     else { // matched with new mentor
                       return bot.reply(message, 'You\'ve been matched with a mentor!');
