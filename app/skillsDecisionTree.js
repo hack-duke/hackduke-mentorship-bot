@@ -32,7 +32,7 @@ exports.setup = function(controller) {
     return bot.reply(message, 'Would you like help with React, Angular, or Javascript in general?')
   });
 
-  controller.hears('ios|android|start|react|angular|firebase|javascript|java|node|python|php|ruby|c#|inequality|health|wellness|energy|environment|education|machine learning|shell|functional|sql|nosql|data', 
+  controller.hears('ios|android|start|react|angular|firebase|javascript|java|node|python|php|ruby|c#|inequality|health|wellness|energy|environment|education|machine learning|shell|functional|sql|nosql|data',
                    'direct_message,direct_mention', function(bot, message) {
     return bot.reply(message, "Please type 'help " + message.match[0] + "' to confirm your choice and get a mentor!")
   });
@@ -42,7 +42,8 @@ exports.setup = function(controller) {
       if(err || !result) {
         return bot.reply(message, err);
       }
-      return bot.reply(message, "Hi " + result + ", what would you like help with: mobile, web, hardware, track knowledge, data science, or a company\'s technology?");
+      var toSay = 'Hi ' + result + ', if you\'re a participant, enter \'help\'. If you\'re a mentor, you can end your session by typing \'end session\'.';
+      return bot.reply(message, toSay);
     });
   });
 
