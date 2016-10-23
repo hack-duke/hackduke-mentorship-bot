@@ -70,7 +70,8 @@ exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
               }
               messageGroup(id, '<!channel> Hey ' + participantName + ', meet ' +
               mentorName + '!\n' + 'This session is to help ' + participantName +
-              ' with a specific problem. Once you\'re done, let me know to end session by typing `@mentorbot end session`!',
+              ' with a specific problem. Once you\'re done, let me know by typing `@mentorbot end session`. After 30 minutes, the session will end automatically and ' + mentorName +
+              ' will be set to _away_. (Don\'t worry! You can still message each other in this chat)',
               function(err, result) {
                if(err || !result) {
                  return cb(err, null);
