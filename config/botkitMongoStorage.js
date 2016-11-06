@@ -77,17 +77,30 @@ module.exports = function(config) {
             },
             // ends mentorship session by setting ongoing to false
             endSession: function(slackId, cb) {
-                Mentor.findOneAndUpdate({slack_id: slackId, active: true}, {active: false}, {upsert: false}, function(err, result) {
-                    if(!result || err) {
+                Mentor.findOneAndUpdate({slack_id: slackId, active: true}, {active: false}, {upsert: false}, function(err, mentor) {
+                    if(!mentor || err) {
                         return cb('You cannot end this session!', null);
                     }
-                    Session.findOne({mentor_id: slackId, ongoing: true}, function(err, result) {
-                        if(!result || err) {
+                    Session.findOne({mentor_id: slackId, ongoing: true}, function(err, session) {
+                        if(!session || err) {
                             return cb('Could not find session to end!', null);
                         }
                         Session.update({mentor_id: slackId, ongoing: true},{end_time: Date.now(), ongoing: false}, {upsert:false}, function(err, result) {
                                 cb(null, result);
                         });
+                        Queue.find({}).sort({start_time: -1}).exec(function(err, entries) {
+                            if(!entries || err) {
+                                return cb('There are no participants in the queue.', null);
+                            }
+                            for(var i = 0; i < entries.length; i++) {
+                                for(var j = 0; j < mentor.skills.length; j++) {
+                                    if(entries[i].session_skill === mentor.skills[j]) {
+                                        startSession(entries[i].session_skill, entries[i].participant_id, cb);
+                                        return;
+                                    }
+                                }
+                            }
+                        })
                     });
                 });
             },
@@ -101,12 +114,12 @@ module.exports = function(config) {
                       return cb('No mentors exist for that skill, please try again later', null);
                     } else if(!mentor['available']) {
                       var queuedParticipant = new Queue({participant_id: participantslackId, start_time: Date.now(), session_skill: capitalized});
-                      queuedParticipant.save(function(err, queuedParticipant)) {
-                        if(!newSession || err) {
+                      queuedParticipant.save(function(err, queuedParticipant) {
+                        if(!queuedParticipant || err) {
                           cb(err, null)
                         }
-                        cb(null, newSession)
-                      }
+                        cb(null, queuedParticipant)
+                      });
                       return cb('No mentors are currently available for that skill, but we will assign one to you as soon as one is available!', null);
                     } else {
                         Session.findOne({mentor_id: mentor['slack_id'], ongoing: true}, function(err, session) {

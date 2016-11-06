@@ -31,12 +31,12 @@ exports.setUpDialog = function(controller) {
 
   // according to the skill/topic asked about, find a mentor, create a group, and invite all parties
   controller.hears('help (.*)', 'direct_message,direct_mention', function(bot,message) {
-    var skills = ['frontend', 'mobile', 'backend', 'web', 'math'];
+    // var skills = ['frontend', 'mobile', 'backend', 'web', 'math'];
     var skill = message.match[1];
-    // skill inputted must match one of the ones listed above, should move to database
-    if(skills.indexOf(skill.trim().toLowerCase()) == -1) {
-      return bot.reply(message, `Please select one of the following skills: ${skills.join(', ')}`);
-    }
+    // // skill inputted must match one of the ones listed above, should move to database
+    // if(skills.indexOf(skill.trim().toLowerCase()) == -1) {
+    //   return bot.reply(message, `Please select one of the following skills: ${skills.join(', ')}`);
+    // }
     var participantSlackId = message['user'];
 
     botkitMongoStorage.mentors.startSession(skill, participantSlackId, function(err, result) {
