@@ -2,6 +2,59 @@ var requestManager = require('./apiRequestManager.js')
 var decisionTree = require('./skillsDecisionTree.js')
 var botkitMongoStorage = require('../config/botkitMongoStorage')({mongoUri: process.env.MONGOURI})
 
+var startSession = exports.startSession = function(skill, participantSlackId, cb) {
+ botkitMongoStorage.mentors.startSession(skill, participantSlackId, function(err, result) {
+    if(err || !result) {
+      return cb(err)
+    }
+    var mentorSlackId = result['mentor_id'];
+
+    // get the user's SlackName (guaranteed unique)
+    requestManager.userNameFromID(participantSlackId, function(err, participantName) {
+      if(err || !participantName) {
+        return cb('Error when finding username from ID')
+      }
+      requestManager.userNameFromID(mentorSlackId, function(err, mentorName) {
+        if(err || !mentorName) {
+          return cb('Error when find username from ID')
+        }
+        // TODO: replace mentor SlackID with name from MongoDB (or session object)
+        // get rid of spaces and periods (not allowed in channel names)
+        var fixedUserName = participantName.toLowerCase().replace(/[. ]/gi, '');
+        var fixedMentorName = mentorName.toLowerCase().replace(/[. ]/gi, '');
+        var groupName = fixedUserName + '-' + fixedMentorName; // see issue #6 for documentation
+        requestManager.createGroup(groupName, function(err, body) {
+          if(err || !body) {
+            return cb('Error when creating group')
+          }
+          // only reply with error if there's an error that's not name_taken
+          // if name_taken, a group between the two users should've started before
+          // and you can simply invite them to the group again if necessary
+
+          if(!body['ok'] && body['error'] != 'name_taken') {
+            return cb('Slack error when creating group')
+          }
+          else {
+            // uppercase ids must be passed into inviteToGroup
+            requestManager.inviteToGroup(groupName, participantSlackId, mentorName, mentorSlackId, 
+                                         result['session_skill'], function(err, inviteResult) {
+              if(err || !inviteResult) {
+                return cb('Error when inviting people to group')
+              }
+              if (!body['ok'] && body['error'] == 'name_taken') { // matched with previous mentor
+                return cb('Looks like ' + mentorName + ' from before can help you out again!\n')
+              }
+              else { // matched with new mentor
+                return cb('You\'ve been matched with a mentor!')
+              }
+            });
+          }
+        });
+      });
+    });
+  });
+}
+
 exports.setUpDialog = function(controller) {
 
   // pulls mentors from registration API and updates them on the database
@@ -39,64 +92,22 @@ exports.setUpDialog = function(controller) {
     }
     var participantSlackId = message['user'];
 
-    botkitMongoStorage.mentors.startSession(skill, participantSlackId, function(err, result) {
-      if(err || !result) {
-        return bot.reply(message, err);
-      }
-      var mentorSlackId = result['mentor_id'];
-
-      // get the user's SlackName (guaranteed unique)
-      requestManager.userNameFromID(participantSlackId, function(err, participantName) {
-          if(err || !participantName) {
-            return bot.reply(message, err);
-          }
-          requestManager.userNameFromID(mentorSlackId, function(err, mentorName) {
-              if(err || !mentorName) {
-                return bot.reply(message, err);
-              }
-              // TODO: replace mentor SlackID with name from MongoDB (or session object)
-              // get rid of spaces and periods (not allowed in channel names)
-              var fixedUserName = participantName.toLowerCase().replace(/[. ]/gi, '');
-              var fixedMentorName = mentorName.toLowerCase().replace(/[. ]/gi, '');
-              var groupName = fixedUserName + '-' + fixedMentorName; // see issue #6 for documentation
-              requestManager.createGroup(groupName, function(err, body) {
-                if(err || !body) {
-                  return bot.reply(message, JSON.stringify(err));
-                }
-                // only reply with error if there's an error that's not name_taken
-                // if name_taken, a group between the two users should've started before
-                // and you can simply invite them to the group again if necessary
-
-                if(!body['ok'] && body['error'] != 'name_taken') {
-                  bot.reply(message, body['error']);
-                }
-                else {
-                  // uppercase ids must be passed into inviteToGroup
-                  requestManager.inviteToGroup(groupName, participantSlackId, mentorName, mentorSlackId, 
-                                               result['session_skill'], function(err, inviteResult) {
-                    if(err || !inviteResult) {
-                      return bot.reply(message, JSON.stringify(err));
-                    }
-                    if (!body['ok'] && body['error'] == 'name_taken') { // matched with previous mentor
-                      return bot.reply(message, 'Looks like ' + mentorName + ' from before can help you out again!\n');
-                    }
-                    else { // matched with new mentor
-                      return bot.reply(message, 'You\'ve been matched with a mentor!');
-                    }
-                  });
-                }
-              });
-          });
-      });
-    });
+    startSession(skill, participantSlackId, function(msg) {
+      bot.reply(message, msg)
+    })
   });
 
   controller.hears('end session','direct_message,direct_mention',function(bot,message) {
-    botkitMongoStorage.mentors.endSession(message['user'], function(err, result) {
-      if(err || !result) {
+    botkitMongoStorage.mentors.endSession(message['user'], function(err, mentor) {
+      if(err || !mentor) {
         return bot.reply(message, err);
       } else {
-        return bot.reply(message,'Thanks for ending the session, you\'ve been placed back into the queue.');
+        bot.reply(message,'Thanks for ending the session, please wait until another hacker needs your help!');
+        botkitMongoStorage.mentors.updateQueue(mentor, function(err, result) {
+          if(err || !result) {
+            bot.reply(message, 'Error updating queue')
+          }
+        })
       }
     });
   });
