@@ -64,12 +64,15 @@ module.exports = function(config) {
         },
         // sets availability of mentor
         setAvailability: function(slackId, availability, cb) {
-          Mentor.findOne({slack_id: slackId}, function(err, result) {
-            if(!result || err) {
+          Mentor.findOne({slack_id: slackId}, function(err, mentor) {
+            if(!mentor || err) {
               cb('You aren\'t a mentor', null);
             } else {
-              Mentor.update({email: result['email']}, {available: setAvailability}, {upsert:true}, function(err, result) {
-                  cb(null, result);
+              Mentor.update({email: mentor['email']}, {available: availability}, {upsert:true}, function(err, result) {
+                if(!result || err) {
+                  return cb('Error updating mentor availability', null)
+                }
+                cb(null, mentor);
               });
             }
           });
@@ -103,7 +106,6 @@ module.exports = function(config) {
                   hasFoundMatch = true
                   var skill = entries[i].session_skill
                   var participant_id = entries[i].participant_id
-                  console.log(entries[i].id)
                   Queue.remove({ _id : entries[i].id }, function(err, result){
                     if(err || !result) {
                       return cb('Failed to remove person from queue', null)

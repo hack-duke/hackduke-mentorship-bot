@@ -82,6 +82,33 @@ exports.setUpDialog = function(controller) {
     });
   });
 
+  // sets mentor to be away
+  controller.hears('away', 'direct_message,direct_mention', function(bot,message) {
+    botkitMongoStorage.mentors.setAvailability(message['user'], false, function(err, mentor) {
+      if(err || !mentor) {
+        bot.reply(message, err)
+      } else {
+        bot.reply(message, 'You\'ve been set to away! Type available to help out more hackers!')
+      }
+    })
+  });
+
+  // sets mentor to be available
+  controller.hears('available', 'direct_message,direct_mention', function(bot,message) {
+    botkitMongoStorage.mentors.setAvailability(message['user'], true, function(err, mentor) {
+      if(err || !mentor) {
+        bot.reply(message, err)
+      } else {
+        bot.reply(message, 'You\'ve been set to available! Please wait until another hacker needs your help!')
+        botkitMongoStorage.mentors.updateQueue(mentor, function(err, result) {
+          if(err || !result) {
+            bot.reply(message, 'Error updating queue')
+          }
+        })
+      }
+    })
+  });
+
   // according to the skill/topic asked about, find a mentor, create a group, and invite all parties
   controller.hears('help (.*)', 'direct_message,direct_mention', function(bot,message) {
     var skills = ['ios'];
