@@ -109,9 +109,18 @@ exports.setUpDialog = function(controller) {
     })
   });
 
+  controller.hears('dequeue', 'direct_message,direct_mention', function(bot, message) {
+    botkitMongoStorage.mentors.dequeue(message['user'], function(err, msg) {
+      if(err || !msg) {
+        return bot.reply(message, 'Error dequeing')
+      }
+      bot.reply(message, msg)
+    })
+  })
+
   // according to the skill/topic asked about, find a mentor, create a group, and invite all parties
   controller.hears('help (.*)', 'direct_message,direct_mention', function(bot,message) {
-    var skills = ['ios'];
+    var skills = ['ios', 'android', 'java', 'react', 'firebase', 'python', 'microsoft'];
     var skill = message.match[1];
     // skill inputted must match one of the ones listed above, should move to database
     if(skills.indexOf(skill.trim().toLowerCase()) == -1) {
