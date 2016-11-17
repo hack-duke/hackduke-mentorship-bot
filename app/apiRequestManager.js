@@ -7,8 +7,8 @@ var slack_url = 'https://slack.com/api'
 exports.getMentors = function(cb) {
   var endpoint = api_url + 'people/roles'
   var postData = {
-    event_type: 'design_con',
-    season: 'spring',
+    event_type: 'code_for_good',
+    season: 'fall',
     year: 2016,
     role: 'mentor'
   }
@@ -46,31 +46,33 @@ exports.createGroup = function(name, cb) {
 }
 
 // invites the participant, mentor, and bot to the group with the specified name
-exports.inviteToGroup = function(groupName, participantSlackId, mentor, cb) {
+exports.inviteToGroup = function(groupName, participantSlackId, mentorName, mentorSlackId, skill, cb) {
   groupIdFromName(groupName, function(err, id) {
     if(err || !id) {
       return cb(err, null);
     }
     var endpoint = slack_url + `/groups.invite?token=${process.env.HACKDUKETOKEN}&channel=${id}`
     // invite all three parties to the channel
-    var mentorSlackId = mentor['slack_id'];
     invite(endpoint, participantSlackId, function(err, result){
       invite(endpoint, mentorSlackId, function(err, result){
         invite(endpoint, process.env.BOTID, function(err, result){
-          if(err || !result) {
-            return cb(err, null);
-          }
-          var mentorFirstName = mentor['first_name'];
-          var mentorLastName = mentor['last_name'];
-          var mentorName = mentorFirstName + ' ' + mentorLastName;
-          // var mentorSkills = mentor['skills'].join(', '); // not shown anymore
           userNameFromID(participantSlackId, function(err, participantName) {
               if(err || !participantName) {
                 return cb(err, null);
               }
+
+              //weird slack bug with special characters
+              if(skill == 'C#') {
+                skill = 'C sharp'
+              } else if(skill == 'Health & Wellness') {
+                skill = 'Health and Wellness'
+              } else if(skill == 'Energy & Environment') {
+                skill = 'Energy and Environment'
+              }
+
               messageGroup(id, '<!channel> Hey ' + participantName + ', meet ' +
               mentorName + '!\n' + 'This session is to help ' + participantName +
-              ' with a specific problem. Once you\'re done, let me know to end session by typing `@mentorbot end session`!',
+              ' with ' + skill  + '. ' + 'Once you\'re done, let me know to end session by typing `@mentorbot end session`!',
               function(err, result) {
                if(err || !result) {
                  return cb(err, null);
