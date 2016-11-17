@@ -192,6 +192,38 @@ exports.setUpDialog = function(controller) {
     });
   });
 
+  controller.hears(['hello','hey', 'hi'], 'direct_message,direct_mention', function(bot, message) {
+    bot.reply(message,{
+      text: "Hi there!",
+      username: "mentorbot",
+      icon_emoji: ":robot_face:",
+    });
+  })
+
+  controller.hears('thank', 'direct_message,direct_mention', function(bot, message) {
+    bot.reply(message,{
+      text: "No problem! Just let me know if I can help again.",
+      username: "mentorbot",
+      icon_emoji: ":robot_face:",
+    });
+  })
+
+  controller.hears(['asdf','adsf'], 'direct_message,direct_mention', function(bot, message) {
+    bot.reply(message,{
+      text: "asdfasdfasdfasdf",
+      username: "mentorbot",
+      icon_emoji: ":fast_parrot:",
+    });
+  })
+
+  controller.hears('hackduke is the best', 'direct_message,direct_mention', function(bot, message) {
+    bot.reply(message,{
+      text: "tell it like it is",
+      username: "mentorbot",
+      icon_emoji: ":datboi:",
+    });
+  })
+
   decisionTree.setup(controller)
 
 }
