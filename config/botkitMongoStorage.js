@@ -9,8 +9,8 @@ module.exports = function(config) {
     mongoose.Promise = global.Promise
     mongoose.connect(config.mongoUri)
 
-    var mentorSchema = new mongoose.Schema({ 
-      first_name: String, 
+    var mentorSchema = new mongoose.Schema({
+      first_name: String,
       last_name: String,
       email: String,
       skills: [String],
@@ -18,26 +18,26 @@ module.exports = function(config) {
       active: Boolean,
       slack_id: String
     });
-    
+
     var queueSchema = new mongoose.Schema({
       participant_id: String,
       start_time: {type: Date, default: Date.now},
       session_skill: String,
     });
-    
+
     var sessionSchema = new mongoose.Schema({
-      mentor_id: String, 
+      mentor_id: String,
       participant_id: String,
-      start_time: {type: Date, default: Date.now}, 
+      start_time: {type: Date, default: Date.now},
       ongoing: Boolean, // whether mentor-participant session is ongoing
       end_time: Date,
-      session_skill: String, 
-      rating: Number // post-session participant rating of session 
+      session_skill: String,
+      rating: Number // post-session participant rating of session
     });
 
     var Mentor = mongoose.model('Mentor', mentorSchema);
     var Session = mongoose.model('Session', sessionSchema);
-    var Queue = mongoose.model('Queue', queueSchema); 
+    var Queue = mongoose.model('Queue', queueSchema);
 
     var storage = {
       mentors: {
@@ -59,7 +59,7 @@ module.exports = function(config) {
         setAvailability: function(slackId, availability, cb) {
           Mentor.findOne({slack_id: slackId}, function(err, mentor) {
             if(!mentor || err) {
-              cb('You aren\'t a mentor!', null);
+              cb('I\'m sorry; I don\'t have you down as a mentor. Type "help" for a list of commands.', null);
             } else {
               Mentor.update({email: mentor['email']}, {available: availability}, {upsert:true}, function(err, result) {
                 if(!result || err) {
@@ -144,7 +144,7 @@ module.exports = function(config) {
               cb(null, entries)
             }
           })
-        }, 
+        },
 
         dequeue: function(participantslackId, cb) {
           Queue.find({}).sort({start_time: -1}).exec(function(err, entries) {
@@ -168,7 +168,7 @@ module.exports = function(config) {
 
         // starts a mentorship session by finding a mentor by matching skills and setting the active to true
         startSession: function(skill, participantslackId, cb) {
-          //check if the participant is in the queue or slack id 
+          //check if the participant is in the queue or slack id
           var inQueue = false
           var inProgress = false
           Queue.find({}).sort({start_time: -1}).exec(function(err, entries) {
@@ -199,13 +199,13 @@ module.exports = function(config) {
                     Session.findOne({mentor_id: mentor['slack_id'], ongoing: true}, function(err, session) {
                        if(session) {
                          return cb('A session with this mentor is already ongoing', null);
-                       } 
+                       }
                        if (err) {
-                         cb('Error finding mentor', null) 
+                         cb('Error finding mentor', null)
                        }
                        else {
-                          var newSession = new Session({mentor_id: mentor['slack_id'], participant_id: participantslackId, 
-                                                        start_time: Date.now(), ongoing: true, session_skill: skill})                   
+                          var newSession = new Session({mentor_id: mentor['slack_id'], participant_id: participantslackId,
+                                                        start_time: Date.now(), ongoing: true, session_skill: skill})
                           newSession.save(function(err, newSession) {
                             if(!newSession || err) {
                               cb('Error saving session', null)
@@ -226,7 +226,7 @@ module.exports = function(config) {
             });
           });
         }
-      } 
+      }
     };
 
     return storage

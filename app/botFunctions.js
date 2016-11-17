@@ -22,7 +22,7 @@ var startSession = exports.startSession = function(skill, participantSlackId, cb
         // get rid of spaces and periods (not allowed in channel names)
         var fixedUserName = participantName.toLowerCase().replace(/[. ]/gi, '');
         var fixedMentorName = mentorName.toLowerCase().replace(/[. ]/gi, '');
-        var groupName = fixedUserName.substring(0, Math.min(10, fixedUserName.length)) + '-' + fixedMentorName.substring(0, Math.min(10, fixedUserName.length)); 
+        var groupName = fixedUserName.substring(0, Math.min(10, fixedUserName.length)) + '-' + fixedMentorName.substring(0, Math.min(10, fixedUserName.length));
         // see issue #6 for documentation - max slack channel length is 21
         requestManager.createGroup(groupName, function(err, body) {
           if(err || !body) {
@@ -37,7 +37,7 @@ var startSession = exports.startSession = function(skill, participantSlackId, cb
           }
           else {
             // uppercase ids must be passed into inviteToGroup
-            requestManager.inviteToGroup(groupName, participantSlackId, mentorName, mentorSlackId, 
+            requestManager.inviteToGroup(groupName, participantSlackId, mentorName, mentorSlackId,
                                          result['session_skill'], function(err, inviteResult) {
               if(err || !inviteResult) {
                 return cb('Error when inviting people to group')
