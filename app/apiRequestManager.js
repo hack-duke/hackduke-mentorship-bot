@@ -7,8 +7,8 @@ var slack_url = 'https://slack.com/api'
 exports.getMentors = function(cb) {
   var endpoint = api_url + 'people/roles'
   var postData = {
-    event_type: 'design_con',
-    season: 'spring',
+    event_type: 'code_for_good',
+    season: 'fall',
     year: 2016,
     role: 'mentor'
   }
@@ -56,13 +56,20 @@ exports.inviteToGroup = function(groupName, participantSlackId, mentorName, ment
     invite(endpoint, participantSlackId, function(err, result){
       invite(endpoint, mentorSlackId, function(err, result){
         invite(endpoint, process.env.BOTID, function(err, result){
-          if(err || !result) {
-            return cb(err, null);
-          }
           userNameFromID(participantSlackId, function(err, participantName) {
               if(err || !participantName) {
                 return cb(err, null);
               }
+
+              //weird slack bug with special characters
+              if(skill == 'C#') {
+                skill = 'C sharp'
+              } else if(skill == 'Health & Wellness') {
+                skill = 'Health and Wellness'
+              } else if(skill == 'Energy & Environment') {
+                skill = 'Energy and Environment'
+              }
+
               messageGroup(id, '<!channel> Hey ' + participantName + ', meet ' +
               mentorName + '!\n' + 'This session is to help ' + participantName +
               ' with ' + skill  + '. ' + 'Once you\'re done, let me know to end session by typing `@mentorbot end session`!',

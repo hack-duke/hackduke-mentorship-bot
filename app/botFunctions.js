@@ -22,7 +22,8 @@ var startSession = exports.startSession = function(skill, participantSlackId, cb
         // get rid of spaces and periods (not allowed in channel names)
         var fixedUserName = participantName.toLowerCase().replace(/[. ]/gi, '');
         var fixedMentorName = mentorName.toLowerCase().replace(/[. ]/gi, '');
-        var groupName = fixedUserName + '-' + fixedMentorName; // see issue #6 for documentation
+        var groupName = fixedUserName.substring(0, Math.min(10, fixedUserName.length)) + '-' + fixedMentorName.substring(0, Math.min(10, fixedUserName.length)); 
+        // see issue #6 for documentation - max slack channel length is 21
         requestManager.createGroup(groupName, function(err, body) {
           if(err || !body) {
             return cb('Error when creating group')
@@ -70,10 +71,10 @@ exports.setUpDialog = function(controller) {
           skills: mentor['role']['skills'],
           active: false,
           available: true,
-          slack_id: 'U0QMVCMM5'
+          slack_id: null
         }
         botkitMongoStorage.mentors.save(data, function(err, result) {
-          if(err || !result) {
+          if(err) {
             bot.reply(message, JSON.stringify(err));
           }
         });
@@ -88,7 +89,7 @@ exports.setUpDialog = function(controller) {
       if(err || !mentor) {
         bot.reply(message, err)
       } else {
-        bot.reply(message, 'You\'ve been set to away! Type available to help out more hackers!')
+        bot.reply(message, "You\'ve been set to away! Type 'available' to help out more hackers!")
       }
     })
   });
@@ -120,13 +121,52 @@ exports.setUpDialog = function(controller) {
 
   // according to the skill/topic asked about, find a mentor, create a group, and invite all parties
   controller.hears('help (.*)', 'direct_message,direct_mention', function(bot,message) {
-    var skills = ['ios', 'android', 'java', 'react', 'firebase', 'python', 'microsoft'];
+    var skills = ['inequality', 'health', 'wellness', 'energy', 'environment', 'education', 'ios', 'android', 'wearable',
+                  'virtual', 'augmented', 'reality', 'microcontroller', 'data', 'science', 'nosql', 'sql', 'c#', 'ruby',
+                  'php', 'python', 'javascript', 'java', 'firebase', 'javascript', 'html', 'css', 'react', 'angular', 'esri',
+                  'lifelock', 'facebook', 'coinbase', 'zoho', 'cerner', 'optum', 'appian', 'microsoft', 'twitter', 'google',
+                  'qualtrics', 'innovation', 'co-lab', 'start']
     var skill = message.match[1];
     // skill inputted must match one of the ones listed above, should move to database
     if(skills.indexOf(skill.trim().toLowerCase()) == -1) {
-      return bot.reply(message, `Please select one of the following skills: ${skills.join(', ')}`);
+      return bot.reply(message, 'We couldn\'t find that option, please try again!');
     }
     var participantSlackId = message['user'];
+
+    var lowercase = skill.trim().toLowerCase()
+
+    // special cases to improve UX
+    if(lowercase == 'health' || lowercase == 'wellness') {
+      skill = 'Health & Wellness'
+    } else if(lowercase == 'energy' || lowercase == 'environment') {
+      skill = 'Energy & Environment'
+    } else if(lowercase == 'virtual' || lowercase == 'augmented' || lowercase == 'reality') {
+      skill = 'Virtual/Augmented Reality'
+    } else if(lowercase == 'data' || lowercase == 'science') {
+      skill = 'Data Science'
+    } else if(lowercase == 'html' || lowercase == 'css') {
+      skill = 'Web Frontend (HTML/Javascript/CSS)'
+    } else if(lowercase == 'innovation' || lowercase == 'co-lab') {
+      skill = 'Innovation Co-Lab'
+    } else if(lowercase == 'ios') {
+      skill = 'iOS'
+    } else if(lowercase == 'php') {
+      skill = 'PHP'
+    } else if(lowercase == 'sql') {
+      skill = 'SQL'
+    } else if(lowercase == 'nosql') {
+      skill = 'NoSQL'
+    } else if (lowercase == 'start') {
+      skill = 'start'
+    } else if(lowercase == 'wearable') {
+      skill = 'Wearables'
+    } else if(lowercase == 'microcontroller') {
+      skill = 'Microcontrollers'
+    } else if(lowercase == 'lifelock') {
+      skill = 'LifeLock'
+    } else {
+      skill = lowercase.charAt(0).toUpperCase() + lowercase.substring(1).toLowerCase();
+    }
 
     startSession(skill, participantSlackId, function(msg) {
       bot.reply(message, msg)
@@ -134,11 +174,15 @@ exports.setUpDialog = function(controller) {
   });
 
   controller.hears('end session','direct_message,direct_mention',function(bot,message) {
-    botkitMongoStorage.mentors.endSession(message['user'], function(err, mentor) {
+    botkitMongoStorage.mentors.endSession(message['user'], function(err, mentor, byMentor) {
       if(err || !mentor) {
         return bot.reply(message, err);
       } else {
-        bot.reply(message,'Thanks for ending the session, please wait until another hacker needs your help!');
+        if(byMentor) {
+          bot.reply(message,'Thanks for ending the session! Please wait until another hacker needs your help.')
+        } else {
+          bot.reply(message,'Thanks for ending the session! Feel free to pair up with another mentor whenever you need help.')
+        }
         botkitMongoStorage.mentors.updateQueue(mentor, function(err, result) {
           if(err || !result) {
             bot.reply(message, 'Error updating queue')
