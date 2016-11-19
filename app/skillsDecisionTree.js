@@ -2,19 +2,19 @@ var requestManager = require('./apiRequestManager.js')
 
 exports.setup = function(controller) {
 
-  controller.hears('mobile|web|hardware|track|company|companies', 'direct_message,direct_mention', function(bot, message) {
+  controller.hears('mobile|web|hardware|company|companies', 'direct_message,direct_mention', function(bot, message) {
     companyText = 'Which of these companies do you need help with: Esri, LifeLock, Facebook, Coinbase, Zoho, Cerner, Optum, Appian, Microsoft, Twitter, Google, Qualtrics, Innovation Co-lab?'
     hardwareText = 'Would you like help with wearables, virtual/augmented reality, or microcontrollers?'
     webText = 'Would you like help with the frontend, the backend, or would you just like help getting started?'
-    trackText = 'Which track are you working on: inequality, health and wellness, energy and environment, or education?'
+    // trackText = 'Which track are you working on: inequality, health and wellness, energy and environment, or education?'
     mobileText = 'Would you like help with iOS or Android development?'
     switch(message.match[0]) {
       case 'hardware':
         return bot.reply(message, hardwareText)
       case 'web':
         return bot.reply(message, webText)
-      case 'track':
-        return bot.reply(message, trackText)
+      // case 'track':
+      //   return bot.reply(message, trackText)
       case 'company':
         return bot.reply(message, companyText)
       case 'companies':
@@ -46,7 +46,7 @@ exports.setup = function(controller) {
       if(err || !result) {
         return bot.reply(message, err);
       }
-      return bot.reply(message, "Hi " + result + ", what would you like help with: mobile, web, hardware, track knowledge, data science, or a company\'s technology? \n If you\'re having trouble with commands as a mentor or hacker, just type 'help'!");
+      return bot.reply(message, "Hi " + result + ", what would you like help with: mobile, web, hardware, data science, or a company\'s technology? \n If you\'re having trouble with commands as a mentor or hacker, just type 'help'!");
     });
   });
 
