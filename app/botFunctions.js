@@ -64,20 +64,23 @@ exports.setUpDialog = function(controller) {
       for(var i = 0; i < body.length; i++){
         var mentor = body[i];
         // arrange data to be placed in Mentor schema
-        data = {
-          first_name: mentor['person']['first_name'],
-          last_name: mentor['person']['last_name'],
-          email: mentor['person']['email'],
-          skills: mentor['role']['skills'],
-          active: false,
-          available: true,
-          slack_id: null
-        }
-        botkitMongoStorage.mentors.save(data, function(err, result) {
-          if(err) {
-            bot.reply(message, JSON.stringify(err));
+        slack_id = mentor['role']['slack_id']
+        if(slack_id != null) {
+          data = {
+            first_name: mentor['person']['first_name'],
+            last_name: mentor['person']['last_name'],
+            email: mentor['person']['email'],
+            skills: mentor['role']['skills'],
+            active: false,
+            available: true,
+            slack_id: slack_id
           }
-        });
+          botkitMongoStorage.mentors.save(data, function(err, result) {
+            if(err) {
+              bot.reply(message, JSON.stringify(err));
+            }
+          });
+        }
       }
       bot.reply(message, 'Mentors updated!')
     });
