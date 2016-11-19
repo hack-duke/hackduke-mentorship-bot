@@ -32,13 +32,13 @@ exports.setup = function(controller) {
     return bot.reply(message, 'Would you like help with React, Angular, or HTML/CSS in general?')
   });
 
-  controller.hears('inequality|health|wellness|energy|environment|education|ios|android|wearable|virtual|augmented|reality|microcontroller|data|science|nosql|sql|c#|ruby|php|python|javascript|java|firebase|javascript|html|css|react|angular|esri|lifelock|facebook|coinbase|zoho|cerner|optum|appian|microsoft|twitter|google|qualtrics|innovation|co-lab|start', 
+  controller.hears('inequality|health|wellness|energy|environment|education|ios|android|wearable|virtual|augmented|reality|microcontroller|data|science|nosql|sql|c#|ruby|php|python|javascript|java|firebase|javascript|html|css|react|angular|esri|lifelock|facebook|coinbase|zoho|cerner|optum|appian|microsoft|twitter|google|qualtrics|innovation|co-lab|start',
                    'direct_message,direct_mention', function(bot, message) {
     return bot.reply(message, "Please type 'help " + message.match[0] + "' to confirm your choice and get a mentor!")
   });
 
   controller.hears('help', 'direct_message,direction_mention', function(bot, message) {
-    bot.reply(message, '\n _General Commands_ \n *end session* - ends the current mentorship session \n _Hacker Commands_ \n *dequeue* - remove your current request from the queue so you can request a different mentor \n _Mentor Commands_ \n *away* - set your state to away so you cannot be paired with a hacker \n *available* - sets your state to available so you can be paired with a hacker' )
+    bot.reply(message, '\n _General Commands_ \n *end session* - ends the current mentorship session \n _Hacker Commands_ \n *dequeue* - remove your current request from the queue so you can request a different mentor \n *mobile*, *web*, *hardware*, *data science*, or *company* for more info about any of these categories \n _Mentor Commands_ \n *away* - set your state to away so you cannot be paired with a hacker \n *available* - sets your state to available so you can be paired with a hacker' )
   });
 
   controller.on('direct_message,direct_mention', function(bot,message) {

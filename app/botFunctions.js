@@ -204,7 +204,13 @@ exports.setUpDialog = function(controller) {
     });
   });
 
-
+  controller.hears('thank', 'direct_message,direct_mention', function(bot, message) {
+    bot.reply(message,{
+      text: "No problem! Just let me know if I can help again.",
+      username: "mentorbot",
+      icon_emoji: ":robot_face:",
+    });
+  })
 
   decisionTree.setup(controller)
 

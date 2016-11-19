@@ -96,7 +96,7 @@ module.exports = function(config) {
         setAvailability: function(slackId, availability, cb) {
           Mentor.findOne({slack_id: slackId}, function(err, mentor) {
             if(!mentor || err) {
-              cb('You aren\'t a mentor!', null);
+              cb('I\'m sorry; I don\'t have you down as a mentor. Type "help" for a list of commands.', null);
             } else {
               Mentor.update({email: mentor['email']}, {available: availability}, {upsert:true}, function(err, result) {
                 if(!result || err) {
