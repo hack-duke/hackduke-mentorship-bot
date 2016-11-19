@@ -22,7 +22,7 @@ var startSession = exports.startSession = function(skill, participantSlackId, cb
         // get rid of spaces and periods (not allowed in channel names)
         var fixedUserName = participantName.toLowerCase().replace(/[. ]/gi, '');
         var fixedMentorName = mentorName.toLowerCase().replace(/[. ]/gi, '');
-        var groupName = fixedUserName.substring(0, Math.min(10, fixedUserName.length)) + '-' + fixedMentorName.substring(0, Math.min(10, fixedUserName.length)); 
+        var groupName = fixedUserName.substring(0, Math.min(10, fixedUserName.length)) + '-' + fixedMentorName.substring(0, Math.min(10, fixedUserName.length));
         // see issue #6 for documentation - max slack channel length is 21
         requestManager.createGroup(groupName, function(err, body) {
           if(err || !body) {
@@ -37,7 +37,7 @@ var startSession = exports.startSession = function(skill, participantSlackId, cb
           }
           else {
             // uppercase ids must be passed into inviteToGroup
-            requestManager.inviteToGroup(groupName, participantSlackId, mentorName, mentorSlackId, 
+            requestManager.inviteToGroup(groupName, participantSlackId, mentorName, mentorSlackId,
                                          result['session_skill'], function(err, inviteResult) {
               if(err || !inviteResult) {
                 return cb('Error when inviting people to group')
@@ -174,7 +174,7 @@ exports.setUpDialog = function(controller) {
   });
 
   controller.hears('end session','direct_message,direct_mention',function(bot,message) {
-    botkitMongoStorage.mentors.endSession(message['user'], function(err, mentor, byMentor) {
+    botkitMongoStorage.mentors.endSession(message['user'], function(err, mentor, name, byMentor) {
       if(err || !mentor) {
         return bot.reply(message, err);
       } else {
@@ -183,14 +183,28 @@ exports.setUpDialog = function(controller) {
         } else {
           bot.reply(message,'Thanks for ending the session! Feel free to pair up with another mentor whenever you need help.')
         }
-        botkitMongoStorage.mentors.updateQueue(mentor, function(err, result) {
-          if(err || !result) {
-            bot.reply(message, 'Error updating queue')
+        requestManager.groupIdFromName(name, function(err, groupid) {
+          if (err || !groupid) {
+            return;
           }
-        })
+          else {
+            requestManager.messageGroup(groupid,'This session is now closed. Happy hacking!', function(err, result) {
+              if (err || !result) {
+                return;
+              }
+            });
+            botkitMongoStorage.mentors.updateQueue(mentor, function(err, result) {
+              if(err || !result) {
+                bot.reply(message, 'Error updating queue')
+              }
+            })
+          }
+        });
       }
     });
   });
+
+
 
   decisionTree.setup(controller)
 
