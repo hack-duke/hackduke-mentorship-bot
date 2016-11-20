@@ -187,38 +187,41 @@ module.exports = function(config) {
               }
               if(!inProgress && !inQueue) {
                 Mentor.find({skills: skill, active: false, available: true}).exec(function(err, mentors) {
-                  var array_of_mentors = mentors
-                  var random = array_of_mentors[Math.floor(Math.random()*array_of_mentors.length)];
-                  Mentor.findOneAndUpdate({_id: random._id}, {active: true}, {upsert:false}, function(err, mentor) {
-                    if(!mentor || err) {
-                      var queuedParticipant = new Queue({participant_id: participantslackId, start_time: Date.now(), session_skill: skill});
-                      queuedParticipant.save(function(err, queuedParticipant) {
-                        if(!queuedParticipant || err) {
-                          return cb('Error when saving queued participant', null)
+                  if(mentors.length > 0) {
+                      var array_of_mentors = mentors
+                      var random = array_of_mentors[Math.floor(Math.random()*array_of_mentors.length)];
+                      Mentor.findOneAndUpdate({_id: random._id}, {active: true}, {upsert:false}, function(err, mentor) {
+                        if(!mentor || err) {
+                          var queuedParticipant = new Queue({participant_id: participantslackId, start_time: Date.now(), session_skill: skill});
+                          queuedParticipant.save(function(err, queuedParticipant) {
+                            if(!queuedParticipant || err) {
+                              return cb('Error when saving queued participant', null)
+                            }
+                            return cb('No mentors available for that skill, you\'ve been added to the queue!', null);
+                          });
+                        } else {
+                          Session.findOne({mentor_id: mentor['slack_id'], ongoing: true}, function(err, session) {
+                             if(session) {
+                               return cb('A session with this mentor is already ongoing', null);
+                             } 
+                             if (err) {
+                               cb('Error finding mentor', null) 
+                             }
+                             else {
+                                var newSession = new Session({mentor_id: mentor['slack_id'], participant_id: participantslackId, 
+                                                              start_time: Date.now(), ongoing: true, session_skill: skill})                   
+                                newSession.save(function(err, newSession) {
+                                  if(!newSession || err) {
+                                    cb('Error saving session', null)
+                                  }
+                                  cb(null, newSession)
+                                });
+                             }
+                          });
                         }
-                        return cb('No mentors available for that skill, you\'ve been added to the queue!', null);
                       });
-                    } else {
-                      Session.findOne({mentor_id: mentor['slack_id'], ongoing: true}, function(err, session) {
-                         if(session) {
-                           return cb('A session with this mentor is already ongoing', null);
-                         } 
-                         if (err) {
-                           cb('Error finding mentor', null) 
-                         }
-                         else {
-                            var newSession = new Session({mentor_id: mentor['slack_id'], participant_id: participantslackId, 
-                                                          start_time: Date.now(), ongoing: true, session_skill: skill})                   
-                            newSession.save(function(err, newSession) {
-                              if(!newSession || err) {
-                                cb('Error saving session', null)
-                              }
-                              cb(null, newSession)
-                            });
-                         }
-                      });
-                    }
-                  });
+                  }
+                  
 
                 })
 
