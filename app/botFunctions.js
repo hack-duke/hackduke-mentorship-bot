@@ -124,7 +124,7 @@ exports.setUpDialog = function(controller) {
 
   // according to the skill/topic asked about, find a mentor, create a group, and invite all parties
   controller.hears('help (.*)', 'direct_message,direct_mention', function(bot,message) {
-    var skills = ['inequality', 'health', 'wellness', 'energy', 'environment', 'education', 'ios', 'android', 'wearable',
+    var skills = ['frontend', 'ios', 'android', 'wearable',
                   'virtual', 'augmented', 'reality', 'microcontroller', 'data', 'science', 'nosql', 'sql', 'c#', 'ruby',
                   'php', 'python', 'javascript', 'java', 'firebase', 'javascript', 'html', 'css', 'react', 'angular', 'esri',
                   'lifelock', 'facebook', 'coinbase', 'zoho', 'cerner', 'optum', 'appian', 'microsoft', 'twitter', 'google',

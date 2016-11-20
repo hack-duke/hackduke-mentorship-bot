@@ -1,6 +1,5 @@
 var mongoose = require('mongoose');
 var botFunctions = require('../app/botFunctions.js')
-var requestManager = require('../app/apiRequestManager.js')
 
 module.exports = function(config) {
 
@@ -10,8 +9,8 @@ module.exports = function(config) {
     mongoose.Promise = global.Promise
     mongoose.connect(config.mongoUri)
 
-    var mentorSchema = new mongoose.Schema({
-      first_name: String,
+    var mentorSchema = new mongoose.Schema({ 
+      first_name: String, 
       last_name: String,
       email: String,
       skills: [String],
@@ -19,62 +18,26 @@ module.exports = function(config) {
       active: Boolean,
       slack_id: String
     });
-
+    
     var queueSchema = new mongoose.Schema({
       participant_id: String,
-      start_time: {type: Date, default: Date.now()},
+      start_time: {type: Date, default: Date.now},
       session_skill: String,
     });
-
+    
     var sessionSchema = new mongoose.Schema({
-      mentor_id: String,
+      mentor_id: String, 
       participant_id: String,
-      start_time: {type: Date, default: Date.now()},
+      start_time: {type: Date, default: Date.now}, 
       ongoing: Boolean, // whether mentor-participant session is ongoing
       end_time: Date,
-      session_skill: String,
-      rating: Number,
-      group_name: String // post-session participant rating of session
+      session_skill: String, 
+      rating: Number // post-session participant rating of session 
     });
 
     var Mentor = mongoose.model('Mentor', mentorSchema);
     var Session = mongoose.model('Session', sessionSchema);
-    var Queue = mongoose.model('Queue', queueSchema);
-
-    setInterval(function() {
-        Session.findOne({start_time: {$lte: new Date(Date.now() - 1800000)}, ongoing: true}, function(err, session) {
-          if(err || !session) {
-            return;
-          }
-          else {
-            var endID = session.mentor_id
-            var name = session.group_name
-            storage.mentors.endSession(endID, function(err, mentor) {
-            if(err || !mentor) {
-              return;
-            } else {
-                requestManager.groupIdFromName(name, function(err, groupid) {
-                  if (err || !groupid) {
-                    return;
-                  }
-                  else {
-                    requestManager.messageGroup(groupid,'30 minutes have expired. This session is now closed. You are free to continue chatting, but this mentor is now set as available to enter sessions with other hackers.', function(err, result) {
-                      if (err || !result) {
-                        return;
-                      }
-                    });
-                    storage.mentors.updateQueue(mentor, function(err, result) {
-                    if(err || !result) {
-                      return;
-                    }
-                  })
-                }
-              })
-            }
-          });
-          }
-        });
-    }, 60000)
+    var Queue = mongoose.model('Queue', queueSchema); 
 
     var storage = {
       mentors: {
@@ -96,7 +59,7 @@ module.exports = function(config) {
         setAvailability: function(slackId, availability, cb) {
           Mentor.findOne({slack_id: slackId}, function(err, mentor) {
             if(!mentor || err) {
-              cb('I\'m sorry; I don\'t have you down as a mentor. Type "help" for a list of commands.', null);
+              cb('You aren\'t a mentor!', null);
             } else {
               Mentor.update({email: mentor['email']}, {available: availability}, {upsert:true}, function(err, result) {
                 if(!result || err) {
@@ -120,14 +83,14 @@ module.exports = function(config) {
                     // updating and ending session object
                     Session.update({participant_id: slackId, ongoing: true},{end_time: Date.now(), ongoing: false}, {upsert:false}, function(err, update) {
                       storage.mentors.updateMentorFromEndedSession(participant_session, update, err, function(err, result) {
-                        return cb(err, result, participant_session.group_name, false)
+                        return cb(err, result, false)
                       })
                     });
                 })
               } else {
                 Session.update({mentor_id: slackId, ongoing: true},{end_time: Date.now(), ongoing: false}, {upsert:false}, function(err, update) {
                   storage.mentors.updateMentorFromEndedSession(mentor_session, update, err, function(err, result) {
-                    return cb(err, result, mentor_session.group_name, true)
+                    return cb(err, result, true)
                   })
                 });
               }
@@ -181,7 +144,7 @@ module.exports = function(config) {
               cb(null, entries)
             }
           })
-        },
+        }, 
 
         dequeue: function(participantslackId, cb) {
           Queue.find({}).sort({start_time: -1}).exec(function(err, entries) {
@@ -205,7 +168,7 @@ module.exports = function(config) {
 
         // starts a mentorship session by finding a mentor by matching skills and setting the active to true
         startSession: function(skill, participantslackId, cb) {
-          //check if the participant is in the queue or slack id
+          //check if the participant is in the queue or slack id 
           var inQueue = false
           var inProgress = false
           Queue.find({}).sort({start_time: -1}).exec(function(err, entries) {
@@ -223,51 +186,44 @@ module.exports = function(config) {
                 }
               }
               if(!inProgress && !inQueue) {
-                Mentor.findOneAndUpdate({skills: skill, active: false, available: true}, {active: true}, {upsert:false}, function(err, mentor) {
-                  if(!mentor || err) {
-                    var queuedParticipant = new Queue({participant_id: participantslackId, start_time: Date.now(), session_skill: skill});
-                    queuedParticipant.save(function(err, queuedParticipant) {
-                      if(!queuedParticipant || err) {
-                        return cb('Error when saving queued participant', null)
-                      }
-                      return cb('No mentors available for that skill, you\'ve been added to the queue!', null);
-                    });
-                  } else {
-                    Session.findOne({mentor_id: mentor['slack_id'], ongoing: true}, function(err, session) {
-                       if(session) {
-                         return cb('A session with this mentor is already ongoing', null);
-                       }
-                       if (err) {
-                         cb('Error finding mentor', null)
-                       }
-                       else {
-                         requestManager.userNameFromID(participantslackId, function(err, participantName) {
-                           if(err || !participantName) {
-                             return cb('Error when finding username from ID')
-                           }
-                           requestManager.userNameFromID(mentor['slack_id'], function(err, mentorName) {
-                             if(err || !mentorName) {
-                               return cb('Error when find username from ID')
-                             }
-                             // TODO: replace mentor SlackID with name from MongoDB (or session object)
-                             // get rid of spaces and periods (not allowed in channel names)
-                             var fixedUserName = participantName.toLowerCase().replace(/[. ]/gi, '');
-                             var fixedMentorName = mentorName.toLowerCase().replace(/[. ]/gi, '');
-                             var groupName = fixedUserName.substring(0, Math.min(10, fixedUserName.length)) + '-' + fixedMentorName.substring(0, Math.min(10, fixedUserName.length));
-                             var newSession = new Session({mentor_id: mentor['slack_id'], participant_id: participantslackId,
-                                                           start_time: Date.now(), ongoing: true, group_name: groupName, session_skill: skill})
-                             newSession.save(function(err, newSession) {
-                               if(!newSession || err) {
-                                 cb('Error saving session', null)
-                               }
-                               cb(null, newSession)
-                             });
-                          })
-                        })
-                       }
-                    });
-                  }
-                });
+                Mentor.find({skills: skill, active: false, available: true}).exec(function(err, mentors) {
+                  var array_of_mentors = mentors
+                  var random = array_of_mentors[Math.floor(Math.random()*array_of_mentors.length)];
+                  Mentor.findOneAndUpdate({_id: random._id}, {active: true}, {upsert:false}, function(err, mentor) {
+                    if(!mentor || err) {
+                      var queuedParticipant = new Queue({participant_id: participantslackId, start_time: Date.now(), session_skill: skill});
+                      queuedParticipant.save(function(err, queuedParticipant) {
+                        if(!queuedParticipant || err) {
+                          return cb('Error when saving queued participant', null)
+                        }
+                        return cb('No mentors available for that skill, you\'ve been added to the queue!', null);
+                      });
+                    } else {
+                      Session.findOne({mentor_id: mentor['slack_id'], ongoing: true}, function(err, session) {
+                         if(session) {
+                           return cb('A session with this mentor is already ongoing', null);
+                         } 
+                         if (err) {
+                           cb('Error finding mentor', null) 
+                         }
+                         else {
+                            var newSession = new Session({mentor_id: mentor['slack_id'], participant_id: participantslackId, 
+                                                          start_time: Date.now(), ongoing: true, session_skill: skill})                   
+                            newSession.save(function(err, newSession) {
+                              if(!newSession || err) {
+                                cb('Error saving session', null)
+                              }
+                              cb(null, newSession)
+                            });
+                         }
+                      });
+                    }
+                  });
+
+                })
+
+
+
               } else {
                 if(inQueue) {
                   return cb("You\'re already in our queue. If you would like to remove yourself from the queue, please type 'dequeue'.", null)
@@ -278,7 +234,7 @@ module.exports = function(config) {
             });
           });
         }
-      }
+      } 
     };
 
     return storage
